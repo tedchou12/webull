@@ -2,6 +2,7 @@ import json
 import requests
 import uuid
 import hashlib
+import time
 
 class webull :
     def __init__(self) :
@@ -26,7 +27,11 @@ class webull :
         password = ('wl_app-a&b@!423^' + password).encode('utf-8')
         md5_hash = hashlib.md5(password)
         # password = md5_hash.hexdigest()
-        data = {'account': username, 'accountType': 2, 'deviceId': self.did, 'pwd': md5_hash.hexdigest(), 'regionId': 1}
+        data = {'account': username,
+                'accountType': 2,
+                'deviceId': self.did,
+                'pwd': md5_hash.hexdigest(),
+                'regionId': 1}
         response = requests.post('https://userapi.webull.com/api/passport/login/account', json=data, headers=self.headers)
 
         result = response.json()
@@ -85,9 +90,21 @@ class webull :
         return output
 
     '''
+    get open orders
+    '''
+    def get_orders(self) :
+        data = self.get_account()
+
+        # output = {}
+        # for item in  :
+        #     output[item['key']] = item['value']
+
+        return data['openOrders']
+
+    '''
     authorize trade, must be done before trade action
     '''
-    def get_trade_token(self, password) :
+    def get_trade_token(self, password='') :
         headers = self.headers
         headers['did'] = self.did
         headers['access_token'] = self.access_token
@@ -108,14 +125,75 @@ class webull :
             return False
 
     '''
+    lookup ticker_id
+    '''
+    def get_ticker(self, stock='') :
+         response = requests.get('https://infoapi.webull.com/api/search/tickers5?keys=' + stock + '&queryNumber=1')
+         result = response.json()
+
+         ticker_id = 0
+         if len(result['list']) == 1 :
+             for item in result['list'] :
+                 ticker_id = item['tickerId']
+         return ticker_id
+
+    '''
     ordering
     '''
-    def order(self) :
-        a = ''
+    def place_order(self, stock='', price='', quant=0) :
 
+         headers = self.headers
+         headers['did'] = self.did
+         headers['access_token'] = self.access_token
+         headers['t_token'] = self.trade_token
+         headers['t_time'] = str(round(time.time() * 1000))
+
+         data = {'action': 'BUY', #  BUY or SELL
+                 'lmtPrice': float(price),
+                 'orderType': 'LMT', # "LMT","MKT","STP","STP LMT"
+                 'outsideRegularTradingHour': True,
+                 'quantity': int(quant),
+                 'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
+                 'tickerId': self.get_ticker(stock),
+                 'timeInForce': 'GTC'} # GTC or DAY or IOC
+
+         response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/10129689/placeStockOrder', json=data, headers=headers)
+         result = response.json()
+
+         if result['success'] == True :
+             return True
+         else :
+             return False
+
+    '''
+    retract an order
+    '''
+    def cancel_order(self, order_id='', serial_id='') :
+
+        headers = self.headers
+        headers['did'] = self.did
+        headers['access_token'] = self.access_token
+        headers['t_token'] = self.trade_token
+        headers['t_time'] = str(round(time.time() * 1000))
+
+        data = {} #https://tradeapi.webulltrade.com/api/trade/order/10129689/cancelStockOrder/13668835/236532d6-d1ff-47c8-99e7-008d54cfaf2e
+
+        response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/10129689/cancelStockOrder/' + str(order_id) + '/' + str(uuid.uuid4()), json=data, headers=headers)
+        result = response.json()
+
+        if result['success'] == True :
+            return True
+        else :
+            return False
 
 if __name__ == '__main__' :
     webull = webull()
-    webull.login('xxxxxxxx', 'xxxxxxxx')
+    webull.login('xxxxxx@xxxx.com', 'xxxxx')
     webull.get_trade_token('xxxxxx')
-    print(webull.trade_token)
+    # webull.place_order('NKTR', 21.0, 1)
+    orders = webull.get_orders()
+    for order in orders :
+        # print(order)
+        webull.cancel_order(order['orderId'], '')
+    # print(webull.get_serial_id())
+    # print(webull.get_ticker('BABA'))
