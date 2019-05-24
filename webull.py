@@ -139,8 +139,13 @@ class webull :
 
     '''
     ordering
+    dir: direction, BUY|SeLL
+    price: float, price to buy the security
+    quant: quantity: number of security to buy/sell
+    type: type of order, LMT|MKT|STP|STP MLT
+    time: order limit time, GTC|DAY|IOC
     '''
-    def place_order(self, stock='', price='', quant=0) :
+    def place_order(self, stock='', dir='BUY', price='', quant=0, type='LMT', time='GTC') :
 
          headers = self.headers
          headers['did'] = self.did
@@ -148,14 +153,14 @@ class webull :
          headers['t_token'] = self.trade_token
          headers['t_time'] = str(round(time.time() * 1000))
 
-         data = {'action': 'BUY', #  BUY or SELL
+         data = {'action': dir, #  BUY or SELL
                  'lmtPrice': float(price),
-                 'orderType': 'LMT', # "LMT","MKT","STP","STP LMT"
+                 'orderType': type, # "LMT","MKT","STP","STP LMT"
                  'outsideRegularTradingHour': True,
                  'quantity': int(quant),
                  'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
                  'tickerId': self.get_ticker(stock),
-                 'timeInForce': 'GTC'} # GTC or DAY or IOC
+                 'timeInForce': time} # GTC or DAY or IOC
 
          response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/10129689/placeStockOrder', json=data, headers=headers)
          result = response.json()
@@ -168,7 +173,7 @@ class webull :
     '''
     retract an order
     '''
-    def cancel_order(self, order_id='', serial_id='') :
+    def cancel_order(self, order_id='') :
 
         headers = self.headers
         headers['did'] = self.did
