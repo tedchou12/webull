@@ -38,10 +38,31 @@ class webull :
         if result['success'] == True and result['code'] == '200' :
             self.access_token = result['data']['accessToken']
             self.refresh_token = result['data']['refreshToken']
+            self.token_expire = result['data']['tokenExpireTime']
             self.uuid = result['data']['uuid']
             return True
         else :
             return False
+
+    def refresh_login(self) :
+        # password = md5_hash.hexdigest()
+        headers = self.headers
+        headers['did'] = self.did
+        headers['access_token'] = self.access_token
+
+        data = {'refreshToken': self.refresh_token}
+
+        response = requests.post('https://userapi.webull.com/api/passport/refreshToken?refreshToken=' + self.refresh_token, json=data, headers=headers)
+
+        result = response.json()
+        if 'accessToken' in result and result['accessToken'] != '' and result['refreshToken'] != '' and result['tokenExpireTime'] != '' :
+            self.access_token = result['accessToken']
+            self.refresh_token = result['refreshToken']
+            self.token_expire = result['tokenExpireTime']
+            return True
+        else :
+            return False
+
 
     '''
     get some contact details of your account name, email/phone, region, avatar...etc
@@ -139,13 +160,8 @@ class webull :
 
     '''
     ordering
-    dir: direction, BUY|SeLL
-    price: float, price to buy the security
-    quant: quantity: number of security to buy/sell
-    type: type of order, LMT|MKT|STP|STP MLT
-    time: order limit time, GTC|DAY|IOC
     '''
-    def place_order(self, stock='', dir='BUY', price='', quant=0, type='LMT', time='GTC') :
+    def place_order(self, stock='', price='', quant=0) :
 
          headers = self.headers
          headers['did'] = self.did
@@ -153,14 +169,14 @@ class webull :
          headers['t_token'] = self.trade_token
          headers['t_time'] = str(round(time.time() * 1000))
 
-         data = {'action': dir, #  BUY or SELL
+         data = {'action': 'BUY', #  BUY or SELL
                  'lmtPrice': float(price),
-                 'orderType': type, # "LMT","MKT","STP","STP LMT"
+                 'orderType': 'LMT', # "LMT","MKT","STP","STP LMT"
                  'outsideRegularTradingHour': True,
                  'quantity': int(quant),
                  'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
                  'tickerId': self.get_ticker(stock),
-                 'timeInForce': time} # GTC or DAY or IOC
+                 'timeInForce': 'GTC'} # GTC or DAY or IOC
 
          response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/10129689/placeStockOrder', json=data, headers=headers)
          result = response.json()
@@ -173,7 +189,7 @@ class webull :
     '''
     retract an order
     '''
-    def cancel_order(self, order_id='') :
+    def cancel_order(self, order_id='', serial_id='') :
 
         headers = self.headers
         headers['did'] = self.did
