@@ -14,6 +14,7 @@ class webull :
         }
         # self.auth_method = self.login_prompt
         self.access_token = ''
+        self.account_id = ''
         self.refresh_token = ''
         self.trade_token = ''
         self.uuid = ''
@@ -78,6 +79,24 @@ class webull :
         return result
 
     '''
+    get account id
+    call account id before trade actions
+    '''
+    def get_account_id(self) :
+        headers = self.headers
+        headers['did'] = self.did
+        headers['access_token'] = self.access_token
+
+        response = requests.get('https://tradeapi.webulltrade.com/api/trade/account/getSecAccountList/v4', headers=headers)
+        result = response.json()
+
+        if result['success'] == True :
+            self.account_id = str(result['data'][0]['secAccountId'])
+            return True
+        else :
+            return False
+
+    '''
     get important details of account, positions, portfolio stance...etc
     '''
     def get_account(self) :
@@ -85,7 +104,7 @@ class webull :
         headers['did'] = self.did
         headers['access_token'] = self.access_token
 
-        response = requests.get('https://tradeapi.webulltrade.com/api/trade/v2/home/10129689', headers=headers)
+        response = requests.get('https://tradeapi.webulltrade.com/api/trade/v2/home/' + self.account_id , headers=headers)
         result = response.json()
 
         return result
@@ -178,7 +197,7 @@ class webull :
                  'tickerId': self.get_ticker(stock),
                  'timeInForce': 'GTC'} # GTC or DAY or IOC
 
-         response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/10129689/placeStockOrder', json=data, headers=headers)
+         response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/' + self.account_id + '/placeStockOrder', json=data, headers=headers)
          result = response.json()
 
          if result['success'] == True :
@@ -197,9 +216,9 @@ class webull :
         headers['t_token'] = self.trade_token
         headers['t_time'] = str(round(time.time() * 1000))
 
-        data = {} #https://tradeapi.webulltrade.com/api/trade/order/10129689/cancelStockOrder/13668835/236532d6-d1ff-47c8-99e7-008d54cfaf2e
+        data = {}
 
-        response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/10129689/cancelStockOrder/' + str(order_id) + '/' + str(uuid.uuid4()), json=data, headers=headers)
+        response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/' + self.account_id + '/cancelStockOrder/' + str(order_id) + '/' + str(uuid.uuid4()), json=data, headers=headers)
         result = response.json()
 
         if result['success'] == True :
