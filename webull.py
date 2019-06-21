@@ -208,7 +208,7 @@ class webull :
     '''
     retract an order
     '''
-    def cancel_order(self, order_id='', serial_id='') :
+    def cancel_order(self, order_id='') :
 
         headers = self.headers
         headers['did'] = self.did
@@ -225,6 +225,15 @@ class webull :
             return True
         else :
             return False
+
+    '''
+    get price quote
+    '''
+    def get_quote(self, stock='') :
+        response = requests.get('https://quoteapi.webull.com/api/quote/tickerRealTimes/v5/' + str(self.get_ticker(stock)))
+        result = response.json()
+
+        return result
 
 if __name__ == '__main__' :
     webull = webull()
