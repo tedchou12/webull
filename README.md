@@ -44,3 +44,9 @@ for order in orders :
   if order['statusCode'] == 'Working' :
     webull.cancel_order(order['orderId'], '')
 ```
+
+# Disclaimer
+This software is not extensively tested, please use at your own risk.
+
+# Developers
+If you are interested to join and help me improve this, feel free to message me.
