@@ -235,6 +235,15 @@ class webull :
 
         return result
 
+    '''
+    get
+    '''
+    def get_tradable(self, stock='') :
+        response = requests.get('https://tradeapi.webulltrade.com/api/trade/ticker/broker/permissionV2?tickerId=' + str(self.get_ticker(stock)))
+        result = response.json()
+
+        return result
+
 if __name__ == '__main__' :
     webull = webull()
     webull.login('xxxxxx@xxxx.com', 'xxxxx')
