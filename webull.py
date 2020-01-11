@@ -143,7 +143,7 @@ class webull :
 
     '''
     Historical orders, can be cancelled or filled
-    status = Cancelled / Filled / Working / Failed / All
+    status = Cancelled / Filled / Working / Partially Filled / Pending / Failed / All
     '''
     def get_history_orders(self, status='Cancelled'):
         headers = self.headers
@@ -220,6 +220,57 @@ class webull :
              return False
 
     '''
+    OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
+    Submit a buy order, its fill will trigger sell order placement. If one sell fills, it will cancel the other
+     sell
+    '''
+    def place_otoco_order(self, stock='', price='', stop_loss_price='', limit_profit_price='', time_in_force='DAY',
+                          quant=0):
+        headers = self.headers
+        headers['did'] = self.did
+        headers['access_token'] = self.access_token
+        headers['t_time'] = str(round(time.time() * 1000))
+
+        data1 = {"newOrders": [
+            {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
+             "outsideRegularTradingHour": False, "action": "BUY", "tickerId": self.get_ticker(stock),
+             "lmtPrice": float(price), "comboType": "MASTER"},
+            {"orderType": "STP", "timeInForce": time_in_force, "quantity": int(quant),
+             "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
+             "auxPrice": float(stop_loss_price), "comboType": "STOP_LOSS"},
+            {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
+             "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
+             "lmtPrice": float(limit_profit_price), "comboType": "STOP_PROFIT"}]}
+
+        response1 = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/corder/stock/check/' + self.account_id,
+                                  json=data1, headers=headers)
+        result1 = response1.json()
+
+        if result1['forward']:
+            data2 = {"newOrders": [
+                {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
+                 "outsideRegularTradingHour": False, "action": "BUY", "tickerId": self.get_ticker(stock),
+                 "lmtPrice": float(price), "comboType": "MASTER", "serialId": str(uuid.uuid4())},
+                {"orderType": "STP", "timeInForce": time_in_force, "quantity": int(quant),
+                 "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
+                 "auxPrice": float(stop_loss_price), "comboType": "STOP_LOSS", "serialId": str(uuid.uuid4())},
+                {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
+                 "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
+                 "lmtPrice": float(limit_profit_price), "comboType": "STOP_PROFIT", "serialId": str(uuid.uuid4())}],
+                "serialId": str(uuid.uuid4())}
+
+            response2 = requests.post(
+                'https://tradeapi.webulltrade.com/api/trade/v2/corder/stock/place/' + self.account_id,
+                json=data2, headers=headers)
+
+            print("Resp 2: {}".format(response2))
+            return True
+        else:
+            print(result1['checkResultList'][0]['code'])
+            print(result1['checkResultList'][0]['msg'])
+            return False
+
+    '''
     retract an order
     '''
     def cancel_order(self, order_id='') :
@@ -262,10 +313,12 @@ if __name__ == '__main__' :
     webull = webull()
     webull.login('xxxxxx@xxxx.com', 'xxxxx')
     webull.get_trade_token('xxxxxx')
+    # set self.account_id first
+    webull.get_account_id()
     # webull.place_order('NKTR', 21.0, 1)
-    orders = webull.get_orders()
+    orders = webull.get_current_orders()
     for order in orders :
         # print(order)
-        webull.cancel_order(order['orderId'], '')
+        webull.cancel_order(order['orderId'])
     # print(webull.get_serial_id())
     # print(webull.get_ticker('BABA'))

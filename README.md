@@ -29,7 +29,7 @@ webull = webull()
 webull.login('test@test.com', 'pa$$w0rd')
 webull.get_account_id()
 webull.get_trade_token('123456')
-orders = webull.get_orders()
+orders = webull.get_current_orders()
 for order in orders :
   print(order)
 ```
@@ -40,10 +40,10 @@ webull = webull()
 webull.login('test@test.com', 'pa$$w0rd')
 webull.get_account_id()
 webull.get_trade_token('123456')
-orders = webull.get_orders()
+orders = webull.get_current_orders()
 for order in orders :
   if order['statusCode'] == 'Working' :
-    webull.cancel_order(order['orderId'], '')
+    webull.cancel_order(order['orderId'])
 ```
 
 # Disclaimer
