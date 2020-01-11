@@ -143,7 +143,7 @@ class webull :
 
     '''
     Historical orders, can be cancelled or filled
-    status = Cancelled / Filled
+    status = Cancelled / Filled / Working / Failed / All
     '''
     def get_history_orders(self, status='Cancelled'):
         headers = self.headers
@@ -152,7 +152,7 @@ class webull :
         headers['t_token'] = self.trade_token
         headers['t_time'] = str(round(time.time() * 1000))
         response = requests.get('https://tradeapi.webulltrade.com/api/trade/v2/option/list?secAccountId=' + self.account_id + '&startTime=' + str(1970-0-1) + '&dateType=ORDER&status=' + str(status), headers=headers)
-        
+
         return response.json()
 
     '''
