@@ -130,9 +130,9 @@ class webull :
         return output
 
     '''
-    get open orders
+    Get open/standing orders
     '''
-    def get_orders(self) :
+    def get_current_orders(self) :
         data = self.get_account()
 
         # output = {}
@@ -140,6 +140,20 @@ class webull :
         #     output[item['key']] = item['value']
 
         return data['openOrders']
+
+    '''
+    Historical orders, can be cancelled or filled
+    status = Cancelled / Filled
+    '''
+    def get_history_orders(self, status='Cancelled'):
+        headers = self.headers
+        headers['did'] = self.did
+        headers['access_token'] = self.access_token
+        headers['t_token'] = self.trade_token
+        headers['t_time'] = str(round(time.time() * 1000))
+        response = requests.get('https://tradeapi.webulltrade.com/api/trade/v2/option/list?secAccountId=' + self.account_id + '&startTime=' + str(1970-0-1) + '&dateType=ORDER&status=' + str(status), headers=headers)
+        
+        return response.json()
 
     '''
     authorize trade, must be done before trade action
@@ -180,7 +194,7 @@ class webull :
     '''
     ordering
     '''
-    def place_order(self, stock='', price='', quant=0) :
+    def place_order(self, stock='', price='BUY', action='', type='LMT', enforce='GTC', quant=0) :
 
          headers = self.headers
          headers['did'] = self.did
@@ -188,14 +202,14 @@ class webull :
          headers['t_token'] = self.trade_token
          headers['t_time'] = str(round(time.time() * 1000))
 
-         data = {'action': 'BUY', #  BUY or SELL
+         data = {'action': action, #  BUY or SELL
                  'lmtPrice': float(price),
-                 'orderType': 'LMT', # "LMT","MKT","STP","STP LMT"
+                 'orderType': type, # "LMT","MKT","STP","STP LMT"
                  'outsideRegularTradingHour': True,
                  'quantity': int(quant),
                  'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
                  'tickerId': self.get_ticker(stock),
-                 'timeInForce': 'GTC'} # GTC or DAY or IOC
+                 'timeInForce': enforce} # GTC or DAY or IOC
 
          response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/' + self.account_id + '/placeStockOrder', json=data, headers=headers)
          result = response.json()
