@@ -3,6 +3,8 @@ import requests
 import uuid
 import hashlib
 import time
+from datetime import datetime
+from pandas import DataFrame, to_datetime
 
 class webull :
     def __init__(self) :
@@ -299,6 +301,83 @@ class webull :
         result = response.json()
 
         return result
+
+    def get_analysis(self, stock=None) :
+        '''
+        get analysis info and returns a dict of analysis ratings
+        '''
+        url = f'https://securitiesapi.webullbroker.com/api/securities/ticker/v5/analysis/{self.get_ticker(stock)}'        
+        return requests.get(url).json()
+
+    def get_financials(self, stock=None) :
+        '''
+        get financials info and returns a dict of financial info
+        '''
+        url = f'https://securitiesapi.webullbroker.com/api/securities/financial/index/{self.get_ticker(stock)}'
+        return requests.get(url).json()
+
+    def get_news(self, stock=None, Id=0, items=20) :
+        '''
+        get news and returns a list of articles
+        params:
+            Id: 0 is latest news article
+            items: number of articles to return 
+        '''
+        url = f'https://securitiesapi.webullbroker.com/api/information/news/v5/tickerNews/{self.get_ticker(stock)}'
+        params = {'currentNewsId': Id, 'pageSize': items}        
+        return requests.get(url, params=params).json()
+
+    def get_options_expiration_dates(self, stock=None) :
+        '''
+        returns a list of options expiration dates
+        '''
+        url = f'https://quoteapi.webullbroker.com/api/quote/option/{self.get_ticker(stock)}/list'        
+        return requests.get(url).json()['expireDateList']
+
+    def get_options(self, stock=None, count=-1, includeWeekly=1, direction='all', expireDate=None, queryAll=0) :
+        '''
+        get options and returns a dict of options contracts
+        params:
+            stock: symbol
+            count: -1
+            includeWeekly: 0 or 1
+            direction: all, calls, puts
+            expireDate: contract expire date
+            queryAll: 0
+        '''
+        if not expireDate:
+            expireDate = self.get_options_expiration_dates(stock)[0]['date']
+        url = f'https://quoteapi.webullbroker.com/api/quote/option/{self.get_ticker(stock)}/list'
+        params = {'count': count, 'includeWeekly': includeWeekly, 'direction': direction,
+            'unSymbol': stock, 'queryAll': queryAll}
+        return requests.get(url, params=params).json()['data']
+
+    def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all') :
+        """
+        get a list of options contracts by expire date and strike price
+        strike: string
+        """
+        opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
+        return [c for c in opts if c['strikePrice'] == strike]
+
+    def get_bars(self, stock=None, interval='m1', count=1) :
+        '''
+        get bars returns a pandas dataframe
+        params:
+            interval: m1, m5, m15, m30, h1, h2, h4, d1, w1
+            count: number of bars to return 
+        '''
+        url = 'https://quoteapi.webull.com/api/quote/tickerChartDatas/v5/'
+        params = {'type': interval, 'count': count}
+        df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
+        df.index.name = 'timestamp'
+        response = requests.get(f'{url}{self.get_ticker(stock)}', params=params)
+        for row in response.json()[0]['data']:
+            row = row.split(',')
+            data = {'open': float(row[1]), 'high': float(row[3]), 'low': float(row[4]), 
+                'close': float(row[2]), 'volume': float(row[6]), 'vwap': float(row[7])}
+            df.loc[datetime.fromtimestamp(int(row[0]))] = data
+        return df.iloc[::-1]
 
     '''
     get
