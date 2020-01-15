@@ -196,7 +196,7 @@ class webull :
     '''
     ordering
     '''
-    def place_order(self, stock='', price='BUY', action='', type='LMT', enforce='GTC', quant=0) :
+    def place_order(self, stock='', price=0, action='BUY', type='LMT', enforce='GTC', quant=0) :
 
          headers = self.headers
          headers['did'] = self.did
@@ -306,7 +306,7 @@ class webull :
         '''
         get analysis info and returns a dict of analysis ratings
         '''
-        url = f'https://securitiesapi.webullbroker.com/api/securities/ticker/v5/analysis/{self.get_ticker(stock)}'        
+        url = f'https://securitiesapi.webullbroker.com/api/securities/ticker/v5/analysis/{self.get_ticker(stock)}'
         return requests.get(url).json()
 
     def get_financials(self, stock=None) :
@@ -321,17 +321,17 @@ class webull :
         get news and returns a list of articles
         params:
             Id: 0 is latest news article
-            items: number of articles to return 
+            items: number of articles to return
         '''
         url = f'https://securitiesapi.webullbroker.com/api/information/news/v5/tickerNews/{self.get_ticker(stock)}'
-        params = {'currentNewsId': Id, 'pageSize': items}        
+        params = {'currentNewsId': Id, 'pageSize': items}
         return requests.get(url, params=params).json()
 
     def get_options_expiration_dates(self, stock=None) :
         '''
         returns a list of options expiration dates
         '''
-        url = f'https://quoteapi.webullbroker.com/api/quote/option/{self.get_ticker(stock)}/list'        
+        url = f'https://quoteapi.webullbroker.com/api/quote/option/{self.get_ticker(stock)}/list'
         return requests.get(url).json()['expireDateList']
 
     def get_options(self, stock=None, count=-1, includeWeekly=1, direction='all', expireDate=None, queryAll=0) :
@@ -360,12 +360,42 @@ class webull :
         opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
         return [c for c in opts if c['strikePrice'] == strike]
 
+    """
+    get a list of options contracts by expire date and strike price
+    stock: string
+    price: float
+    action: string BUY / SELL
+    type: MKT / LMT
+    enforce: GTC / DAY
+    quant: int
+    """
+    def place_option_order(self, stock='', price='', action='', type='LMT', enforce='GTC', quant=0) :
+        headers = self.headers
+        headers['did'] = self.did
+        headers['access_token'] = self.access_token
+        headers['t_token'] = self.trade_token
+        headers['t_time'] = str(round(time.time() * 1000))
+
+        data = {'lmtPrice': float(price),
+                'orderType': type, # "LMT","MKT"
+                'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
+                'orders': {'quantity': quant, 'action': action, 'tickerId': self.get_ticker(stock), 'tickerType': 'OPTION'},
+                'timeInForce': enforce} # GTC or DAY or IOC
+
+        response = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/option/checkOrder/' + self.account_id, json=data, headers=headers)
+        result = response.json()
+
+        if result['success'] == True :
+            return True
+        else :
+            return False
+
     def get_bars(self, stock=None, interval='m1', count=1, extendTrading=0) :
         '''
         get bars returns a pandas dataframe
         params:
             interval: m1, m5, m15, m30, h1, h2, h4, d1, w1
-            count: number of bars to return 
+            count: number of bars to return
             extendTrading: change to 1 for pre-market and afterhours bars
         '''
         url = f'https://quoteapi.webull.com/api/quote/tickerChartDatas/v5/{self.get_ticker(stock)}'
@@ -375,7 +405,7 @@ class webull :
         response = requests.get(url, params=params)
         for row in response.json()[0]['data']:
             row = row.split(',')
-            data = {'open': float(row[1]), 'high': float(row[3]), 'low': float(row[4]), 
+            data = {'open': float(row[1]), 'high': float(row[3]), 'low': float(row[4]),
                 'close': float(row[2]), 'volume': float(row[6]), 'vwap': float(row[7])}
             df.loc[datetime.fromtimestamp(int(row[0]))] = data
         return df.iloc[::-1]
