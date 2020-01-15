@@ -360,15 +360,16 @@ class webull :
         opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
         return [c for c in opts if c['strikePrice'] == strike]
 
-    def get_bars(self, stock=None, interval='m1', count=1) :
+    def get_bars(self, stock=None, interval='m1', count=1, extendTrading=0) :
         '''
         get bars returns a pandas dataframe
         params:
             interval: m1, m5, m15, m30, h1, h2, h4, d1, w1
             count: number of bars to return 
+            extendTrading: change to 1 for pre-market and afterhours bars
         '''
         url = 'https://quoteapi.webull.com/api/quote/tickerChartDatas/v5/'
-        params = {'type': interval, 'count': count}
+        params = {'type': interval, 'count': count, 'extendTrading': extendTrading}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
         response = requests.get(f'{url}{self.get_ticker(stock)}', params=params)
