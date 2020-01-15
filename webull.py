@@ -368,11 +368,11 @@ class webull :
             count: number of bars to return 
             extendTrading: change to 1 for pre-market and afterhours bars
         '''
-        url = 'https://quoteapi.webull.com/api/quote/tickerChartDatas/v5/'
+        url = f'https://quoteapi.webull.com/api/quote/tickerChartDatas/v5/{self.get_ticker(stock)}'
         params = {'type': interval, 'count': count, 'extendTrading': extendTrading}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
-        response = requests.get(f'{url}{self.get_ticker(stock)}', params=params)
+        response = requests.get(url, params=params)
         for row in response.json()[0]['data']:
             row = row.split(',')
             data = {'open': float(row[1]), 'high': float(row[3]), 'low': float(row[4]), 
