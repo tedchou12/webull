@@ -405,6 +405,7 @@ class webull :
         response = requests.get(url, params=params)
         for row in response.json()[0]['data']:
             row = row.split(',')
+            row = ['0' if value == 'null' else value for value in row]
             data = {'open': float(row[1]), 'high': float(row[3]), 'low': float(row[4]),
                 'close': float(row[2]), 'volume': float(row[6]), 'vwap': float(row[7])}
             df.loc[datetime.fromtimestamp(int(row[0]))] = data
