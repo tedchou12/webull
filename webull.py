@@ -22,6 +22,19 @@ class webull :
         self.uuid = ''
         self.did = '1bc0f666c4614a11808a372f14ffe42c'
 
+    def build_req_headers(self, include_trade_token=False, include_time=False):
+        '''
+        Build default set of header params
+        '''
+        headers = self.headers
+        headers['did'] = self.did
+        headers['access_token'] = self.access_token
+        if include_trade_token:
+            headers['t_token'] = self.trade_token
+        if include_time:
+            headers['t_time'] = str(round(time.time() * 1000))
+        return headers
+
     '''
     for login purposes password need to be hashed password, figuring out what hash function is used currently.
     '''
@@ -49,9 +62,7 @@ class webull :
 
     def refresh_login(self) :
         # password = md5_hash.hexdigest()
-        headers = self.headers
-        headers['did'] = self.did
-        headers['access_token'] = self.access_token
+        headers = self.build_req_headers()
 
         data = {'refreshToken': self.refresh_token}
 
@@ -71,9 +82,7 @@ class webull :
     get some contact details of your account name, email/phone, region, avatar...etc
     '''
     def get_detail(self) :
-        headers = self.headers
-        headers['did'] = self.did
-        headers['access_token'] = self.access_token
+        headers = self.build_req_headers()
 
         response = requests.get('https://userapi.webull.com/api/user', headers=headers)
         result = response.json()
@@ -85,9 +94,7 @@ class webull :
     call account id before trade actions
     '''
     def get_account_id(self) :
-        headers = self.headers
-        headers['did'] = self.did
-        headers['access_token'] = self.access_token
+        headers = self.build_req_headers()
 
         response = requests.get('https://tradeapi.webulltrade.com/api/trade/account/getSecAccountList/v4', headers=headers)
         result = response.json()
@@ -102,9 +109,7 @@ class webull :
     get important details of account, positions, portfolio stance...etc
     '''
     def get_account(self) :
-        headers = self.headers
-        headers['did'] = self.did
-        headers['access_token'] = self.access_token
+        headers = self.build_req_headers()
 
         response = requests.get('https://tradeapi.webulltrade.com/api/trade/v2/home/' + self.account_id , headers=headers)
         result = response.json()
@@ -148,11 +153,7 @@ class webull :
     status = Cancelled / Filled / Working / Partially Filled / Pending / Failed / All
     '''
     def get_history_orders(self, status='Cancelled'):
-        headers = self.headers
-        headers['did'] = self.did
-        headers['access_token'] = self.access_token
-        headers['t_token'] = self.trade_token
-        headers['t_time'] = str(round(time.time() * 1000))
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
         response = requests.get('https://tradeapi.webulltrade.com/api/trade/v2/option/list?secAccountId=' + self.account_id + '&startTime=' + str(1970-0-1) + '&dateType=ORDER&status=' + str(status), headers=headers)
 
         return response.json()
@@ -161,9 +162,7 @@ class webull :
     authorize trade, must be done before trade action
     '''
     def get_trade_token(self, password='') :
-        headers = self.headers
-        headers['did'] = self.did
-        headers['access_token'] = self.access_token
+        headers = self.build_req_headers()
 
         # with webull md5 hash salted
         password = ('wl_app-a&b@!423^' + password).encode('utf-8')
@@ -196,13 +195,8 @@ class webull :
     '''
     ordering
     '''
-    def place_order(self, stock='', price=0, action='BUY', type='LMT', enforce='GTC', quant=0) :
-
-         headers = self.headers
-         headers['did'] = self.did
-         headers['access_token'] = self.access_token
-         headers['t_token'] = self.trade_token
-         headers['t_time'] = str(round(time.time() * 1000))
+    def place_order(self, stock='', price=0, action='BUY', type='LMT', enforce='GTC', quant=0):
+         headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
          data = {'action': action, #  BUY or SELL
                  'lmtPrice': float(price),
@@ -228,10 +222,7 @@ class webull :
     '''
     def place_otoco_order(self, stock='', price='', stop_loss_price='', limit_profit_price='', time_in_force='DAY',
                           quant=0):
-        headers = self.headers
-        headers['did'] = self.did
-        headers['access_token'] = self.access_token
-        headers['t_time'] = str(round(time.time() * 1000))
+        headers = self.build_req_headers(include_trade_token=False, include_time=True)
 
         data1 = {"newOrders": [
             {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
@@ -275,13 +266,8 @@ class webull :
     '''
     retract an order
     '''
-    def cancel_order(self, order_id='') :
-
-        headers = self.headers
-        headers['did'] = self.did
-        headers['access_token'] = self.access_token
-        headers['t_token'] = self.trade_token
-        headers['t_time'] = str(round(time.time() * 1000))
+    def cancel_order(self, order_id=''):
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
         data = {}
 
@@ -292,6 +278,18 @@ class webull :
             return True
         else :
             return False
+
+    def cancel_otoco_order(self, order_id=''):
+        '''
+        Retract an otoco order. Cancelling the MASTER order_id cancels the sub orders.
+        '''
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+
+        data = { "serialId": str(uuid.uuid4()), "cancelOrders": [str(order_id)]}
+
+        response = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/corder/stock/modify/' + self.account_id,
+                                 json=data, headers=headers)
+        return response.json()
 
     '''
     get price quote
@@ -370,11 +368,7 @@ class webull :
     quant: int
     """
     def place_option_order(self, stock='', price='', action='', type='LMT', enforce='GTC', quant=0) :
-        headers = self.headers
-        headers['did'] = self.did
-        headers['access_token'] = self.access_token
-        headers['t_token'] = self.trade_token
-        headers['t_time'] = str(round(time.time() * 1000))
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
         data = {'lmtPrice': float(price),
                 'orderType': type, # "LMT","MKT"
