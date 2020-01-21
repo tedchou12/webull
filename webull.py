@@ -377,7 +377,7 @@ class webull :
                 'orders': [{'quantity': quant, 'action': action, 'tickerId': optionId, 'tickerType': 'OPTION'}],
                 'timeInForce': enforce} # GTC or DAY or IOC
 
-        response = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/option/checkOrder/' + self.account_id, json=data, headers=headers)
+        response = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/option/placeOrder/' + self.account_id, json=data, headers=headers)
         try: 
             response.raise_for_status()
             if response.json()['forward']:
