@@ -195,12 +195,12 @@ class webull :
     '''
     ordering
     '''
-    def place_order(self, stock='', price=0, action='BUY', type='LMT', enforce='GTC', quant=0):
+    def place_order(self, stock='', price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
          headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
          data = {'action': action, #  BUY or SELL
                  'lmtPrice': float(price),
-                 'orderType': type, # "LMT","MKT","STP","STP LMT"
+                 'orderType': orderType, # "LMT","MKT","STP","STP LMT"
                  'outsideRegularTradingHour': True,
                  'quantity': int(quant),
                  'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
@@ -358,30 +358,35 @@ class webull :
         opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
         return [c for c in opts if c['strikePrice'] == strike]
 
-    """
-    get a list of options contracts by expire date and strike price
-    stock: string
-    price: float
-    action: string BUY / SELL
-    type: MKT / LMT
-    enforce: GTC / DAY
-    quant: int
-    """
-    def place_option_order(self, stock='', price='', action='', type='LMT', enforce='GTC', quant=0) :
+    def place_option_order(self, optionId='', price='', action='', orderType='LMT', enforce='GTC', quant=0) :
+        """
+        get a list of options contracts by expire date and strike price
+        stock: string
+        price: float
+        action: string BUY / SELL
+        optionId: string
+        orderType: MKT / LMT
+        enforce: GTC / DAY
+        quant: int
+        """
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
         data = {'lmtPrice': float(price),
-                'orderType': type, # "LMT","MKT"
+                'orderType': orderType, # "LMT","MKT"
                 'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
-                'orders': {'quantity': quant, 'action': action, 'tickerId': self.get_ticker(stock), 'tickerType': 'OPTION'},
+                'orders': [{'quantity': quant, 'action': action, 'tickerId': optionId, 'tickerType': 'OPTION'}],
                 'timeInForce': enforce} # GTC or DAY or IOC
 
         response = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/option/checkOrder/' + self.account_id, json=data, headers=headers)
-        result = response.json()
-
-        if result['success'] == True :
-            return True
-        else :
+        try: 
+            response.raise_for_status()
+            if response.json()['forward']:
+                return True
+            else:
+                print(response.json())
+                return False
+        except Exception as e: 
+            print(f'option order failed: {e}')
             return False
 
     def get_bars(self, stock=None, interval='m1', count=1, extendTrading=0) :
