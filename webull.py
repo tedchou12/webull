@@ -210,10 +210,7 @@ class webull :
          response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/' + self.account_id + '/placeStockOrder', json=data, headers=headers)
          result = response.json()
 
-         if result['success']:
-             return True
-         else :
-             return False
+         return result['success']
 
     '''
     OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
