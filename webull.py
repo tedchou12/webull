@@ -300,6 +300,16 @@ class webull :
 
         return result
 
+    def get_option_quote(self, stock=None, optionId=None) :
+        '''
+        get option quote
+        '''
+        headers = self.build_req_headers()
+        stock = self.get_ticker(stock)
+        url = f'https://quotes-gw.webullbroker.com/api/quote/option/query/list'
+        params = {'tickerId': int(stock), 'derivativeIds': int(optionId)}
+        return requests.get(url, params=params, headers=headers).json()
+
     def get_analysis(self, stock=None) :
         '''
         get analysis info and returns a dict of analysis ratings
@@ -325,12 +335,13 @@ class webull :
         params = {'currentNewsId': Id, 'pageSize': items}
         return requests.get(url, params=params).json()
 
-    def get_options_expiration_dates(self, stock=None) :
+    def get_options_expiration_dates(self, stock=None, count = -1) :
         '''
         returns a list of options expiration dates
         '''
         url = f'https://quoteapi.webullbroker.com/api/quote/option/{self.get_ticker(stock)}/list'
-        return requests.get(url).json()['expireDateList']
+        data = {'count': count}
+        return requests.get(url, params=data).json()['expireDateList']
 
     def get_options(self, stock=None, count=-1, includeWeekly=1, direction='all', expireDate=None, queryAll=0) :
         '''
@@ -344,10 +355,14 @@ class webull :
             queryAll: 0
         '''
         if not expireDate:
-            expireDate = self.get_options_expiration_dates(stock)[0]['date']
+            dates = self.get_options_expiration_dates(stock)[0]['date']
+            for d in dates:
+                if d['days'] > 0:
+                    expireDate = d['date']
+                    break
         url = f'https://quoteapi.webullbroker.com/api/quote/option/{self.get_ticker(stock)}/list'
         params = {'count': count, 'includeWeekly': includeWeekly, 'direction': direction,
-            'unSymbol': stock, 'queryAll': queryAll}
+            'expireDate': expireDate, 'unSymbol': stock, 'queryAll': queryAll}
         return requests.get(url, params=params).json()['data']
 
     def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all') :
@@ -365,26 +380,22 @@ class webull :
         price: float
         action: string BUY / SELL
         optionId: string
-        orderType: MKT / LMT
-        enforce: GTC / DAY
+        orderType: LMT
+        enforce: DAY
         quant: int
         """
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
         data = {'lmtPrice': float(price),
-                'orderType': orderType, # "LMT","MKT"
+                'orderType': orderType, # "LMT"
                 'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
                 'orders': [{'quantity': quant, 'action': action, 'tickerId': optionId, 'tickerType': 'OPTION'}],
-                'timeInForce': enforce} # GTC or DAY or IOC
+                'timeInForce': enforce} # DAY 
 
         response = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/option/placeOrder/' + self.account_id, json=data, headers=headers)
         try: 
             response.raise_for_status()
-            if response.json()['forward']:
-                return True
-            else:
-                print(response.json())
-                return False
+            return True
         except Exception as e: 
             print(f'option order failed: {e}')
             return False
