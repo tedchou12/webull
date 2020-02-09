@@ -51,7 +51,7 @@ class webull :
         response = requests.post('https://userapi.webull.com/api/passport/login/account', json=data, headers=self.headers)
 
         result = response.json()
-        if result['success'] == True and result['code'] == '200' :
+        if result['success'] and result['code'] == '200' :
             self.access_token = result['data']['accessToken']
             self.refresh_token = result['data']['refreshToken']
             self.token_expire = result['data']['tokenExpireTime']
@@ -99,7 +99,7 @@ class webull :
         response = requests.get('https://tradeapi.webulltrade.com/api/trade/account/getSecAccountList/v4', headers=headers)
         result = response.json()
 
-        if result['success'] == True :
+        if result['success']:
             self.account_id = str(result['data'][0]['secAccountId'])
             return True
         else :
@@ -173,7 +173,7 @@ class webull :
         response = requests.post('https://tradeapi.webulltrade.com/api/trade/login', json=data, headers=headers)
         result = response.json()
 
-        if result['success'] == True :
+        if result['success']:
             self.trade_token = result['data']['tradeToken']
             return True
         else :
@@ -210,10 +210,7 @@ class webull :
          response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/' + self.account_id + '/placeStockOrder', json=data, headers=headers)
          result = response.json()
 
-         if result['success'] == True :
-             return True
-         else :
-             return False
+         return result['success']
 
     '''
     OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
@@ -274,10 +271,7 @@ class webull :
         response = requests.post('https://tradeapi.webulltrade.com/api/trade/order/' + self.account_id + '/cancelStockOrder/' + str(order_id) + '/' + str(uuid.uuid4()), json=data, headers=headers)
         result = response.json()
 
-        if result['success'] == True :
-            return True
-        else :
-            return False
+        return result['success']
 
     def cancel_otoco_order(self, order_id=''):
         '''
@@ -379,10 +373,7 @@ class webull :
         response = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/option/checkOrder/' + self.account_id, json=data, headers=headers)
         result = response.json()
 
-        if result['success'] == True :
-            return True
-        else :
-            return False
+        return result['success']
 
     def get_bars(self, stock=None, interval='m1', count=1, extendTrading=0) :
         '''
