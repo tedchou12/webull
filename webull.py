@@ -187,8 +187,6 @@ class webull :
         url = 'https://userapi.webullbroker.com/api/user/warning/v2/query/tickers'
         
         response = requests.get(url, headers=headers)
-        if response.status_code != 200:
-            raise Exception('alerts_list failed', response.status_code, response.reason)
         return result.get('data', [])
 
     def alerts_remove(self, alert=None, priceAlert=True, smartAlert=True):
