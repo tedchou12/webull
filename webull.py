@@ -471,82 +471,74 @@ class webull :
         opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
         return [c for c in opts if c['strikePrice'] == strike]
 
-    def place_option_order(self, optionId='', price='', action='', orderType='LMT', enforce='DAY', quant=0) :
+    def place_option_order(self, optionId=None, ltmPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0) :
         """
-        get a list of options contracts by expire date and strike price
+        create buy / sell order
         stock: string
-        price: float
+        lmtPrice: float
+        stpPrice: float
         action: string BUY / SELL
         optionId: string
-        orderType: LMT
+        orderType: LMT / STP / STP LMT
         enforce: DAY
         quant: int
         """
         url = f'https://tradeapi.webulltrade.com/api/trade/v2/option/placeOrder/{self.account_id}'
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
-        data = {'lmtPrice': float(price),
-                'orderType': orderType, # "LMT"
-                'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
-                'orders': [{'quantity': quant, 'action': action, 'tickerId': optionId, 'tickerType': 'OPTION'}],
-                'timeInForce': enforce} # DAY
+        data = {
+            'orderType': orderType,
+            'serialId': str(uuid.uuid4()),
+            'timeInForce': enforce,
+            'orders': [{'quantity': quant, 'action': action, 'tickerId': optionId, 'tickerType': 'OPTION'}],
+        }
+
+        if order['orderType'] == 'LMT' and lmtPrice:
+            data['lmtPrice'] = float(lmtPrice)
+        if orderType == 'STP' and stpPrice:
+            data['auxPrice'] = float(stpPrice),
+        if orderType == 'STP LMT' and lmtPrice and stpPrice:
+            data['lmtPrice'] = float(lmtPrice),
+            data['auxPrice'] = float(stpPrice),
 
         response = requests.post(url, json=data, headers=headers)
         if response.status_code != 200:
             raise Exception('place_option_order failed', response.status_code, response.reason)
         return True
 
-def replace_option_order(self, order=None, lmtPrice=None, stpPrice=None, enforce=None, quant=0):
-    '''
-    order: dict from get_current_orders
-    price: float
-    action: string BUY / SELL
-    optionId: string
-    enforce: DAY
-    quant: int
-    '''
-    headers = self.build_req_headers(include_trade_token=True, include_time=True)
-    
-    if order['orderType'] == 'LMT':
-        data = {'comboId': order['comboId'],
-            'lmtPrice': price if lmtPrice else order['lmtPrice'],
-            'orderType': order['orderType'],
-            'timeInForce': enforce if enforce else order['timeInForce'],
-            'serialId': str(uuid.uuid4()), 
-            'orders': [{'quantity': quant if quant > 0 else order['totalQuantity'],
-                        'action': action if action else order['action'],
-                        'tickerId': order['optionId'],
-                        'tickerType': 'OPTION'}]}
-    elif order['orderType'] == 'STP':
-        data = {'comboId': order['comboId'],
-            'auxPrice': price if stpPrice else order['auxPrice'],
-            'orderType': order['orderType'],
-            'timeInForce': enforce if enforce else order['timeInForce'],
-            'serialId': str(uuid.uuid4()), 
-            'orders': [{'quantity': quant if quant > 0 else order['totalQuantity'],
-                        'action': action if action else order['action'],
-                        'tickerId': order['optionId'],
-                        'tickerType': 'OPTION'}]}
-        
-    elif order['orderType'] == 'STP LMT':
-        data = {'comboId': order['comboId'],
-            'auxPrice': price if stpPrice else order['auxPrice'],
-            'lmtPrice': price if lmtPrice else order['lmtPrice'],
-            'orderType': order['orderType'],
-            'timeInForce': enforce if enforce else order['timeInForce'],
-            'serialId': str(uuid.uuid4()), 
-            'orders': [{'quantity': quant if quant > 0 else order['totalQuantity'],
-                        'action': action if action else order['action'],
-                        'tickerId': order['optionId'],
-                        'tickerType': 'OPTION'}]}
-    else:
-        raise Exception('replace_option_order failed, unknown order type')
+    def replace_option_order(self, order=None, lmtPrice=None, stpPrice=None, enforce=None, quant=0):
+        '''
+        order: dict from get_current_orders
+        price: float
+        action: string BUY / SELL
+        optionId: string
+        enforce: DAY
+        quant: int
+        '''
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
-    url = f'https://tradeapi.webulltrade.com/api/trade/v2/option/replaceOrder/{self.account_id}'
-    response = requests.post(url, json=data, headers=headers)
-    if response.status_code != 200:
-        raise Exception('replace_option_order failed', response.status_code, response.reason)
-    return True
+        data = {'comboId': order['comboId'],
+                'orderType': order['orderType'],
+                'timeInForce': enforce if enforce else order['timeInForce'],
+                'serialId': str(uuid.uuid4()), 
+                'orders': [{'quantity': quant if quant > 0 else order['totalQuantity'],
+                            'action': action if action else order['action'],
+                            'tickerId': order['optionId'],
+                            'tickerType': 'OPTION'}]}
+        
+        if order['orderType'] == 'LMT' and (lmtPrice or order['lmtPrice']):
+            data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
+        if order['orderType'] and (stpPrice or order['auxPrice']):
+            data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
+        if order['orderType'] == 'STP LMT' and (stpPrice or order['auxPrice']) and (lmtPrice or order['lmtPrice']):
+            data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
+            data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
+    
+        url = f'https://tradeapi.webulltrade.com/api/trade/v2/option/replaceOrder/{self.account_id}'
+        response = requests.post(url, json=data, headers=headers)
+        if response.status_code != 200:
+            raise Exception('replace_option_order failed', response.status_code, response.reason)
+        return True
 
     def get_bars(self, stock=None, interval='m1', count=1, extendTrading=0) :
         '''
