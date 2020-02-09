@@ -187,6 +187,7 @@ class webull :
         url = 'https://userapi.webullbroker.com/api/user/warning/v2/query/tickers'
         
         response = requests.get(url, headers=headers)
+        result = response.json()
         return result.get('data', [])
 
     def alerts_remove(self, alert=None, priceAlert=True, smartAlert=True):
