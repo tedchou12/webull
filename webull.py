@@ -523,7 +523,7 @@ class webull :
                 'orders': [{'quantity': quant if int(quant) > 0 else order['totalQuantity'],
                             'action': order['action'],
                             'tickerId': order['ticker']['tickerId'],
-                            'tickerType': 'OPTION'
+                            'tickerType': 'OPTION',
                             'orderId': order['orderId']}]}
         
         if order['orderType'] == 'LMT' and (lmtPrice or order['lmtPrice']):
