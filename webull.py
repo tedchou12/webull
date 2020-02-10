@@ -522,8 +522,9 @@ class webull :
                 'serialId': str(uuid.uuid4()), 
                 'orders': [{'quantity': quant if int(quant) > 0 else order['totalQuantity'],
                             'action': order['action'],
-                            'tickerId': order['optionId'],
-                            'tickerType': 'OPTION'}]}
+                            'tickerId': order['ticker']['tickerId'],
+                            'tickerType': 'OPTION'
+                            'orderId': order['orderId']}]}
         
         if order['orderType'] == 'LMT' and (lmtPrice or order['lmtPrice']):
             data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
