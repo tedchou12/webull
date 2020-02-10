@@ -274,6 +274,27 @@ class webull :
             raise Exception('alerts_add failed', response.status_code, response.reason)
         return True
 
+    def get_active_gainer_loser(self, direction='gainer') :
+        '''
+        gets active / gainer / loser stocks sorted by change
+        direction: active / gainer / loser
+        '''
+        headers = self.build_req_headers()
+
+        if direction == 'gainer':
+            url = 'https://securitiesapi.webullbroker.com/api/securities/market/v5/card/stockActivityPc.advanced/list'
+        if direction == 'loser':
+            url = 'https://securitiesapi.webullbroker.com/api/securities/market/v5/card/stockActivityPc.declined/list'
+        if direction == 'active':
+            url = 'https://securitiesapi.webullbroker.com/api/securities/market/v5/card/stockActivityPc.active/list'
+
+        params = {'regionId': 6, 'userRegionId': 6}
+        response = requests.get(url, params=params, headers=headers)
+        result = response.json()
+        result = sorted(result, key=lambda k: k['change'], reverse=True)
+
+        return result
+
     '''
     lookup ticker_id
     '''
