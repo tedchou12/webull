@@ -509,9 +509,8 @@ class webull :
     def replace_option_order(self, order=None, lmtPrice=None, stpPrice=None, enforce=None, quant=0):
         '''
         order: dict from get_current_orders
-        price: float
-        action: string BUY / SELL
-        optionId: string
+        stpPrice: float
+        lmtPrice: float
         enforce: DAY
         quant: int
         '''
@@ -521,8 +520,8 @@ class webull :
                 'orderType': order['orderType'],
                 'timeInForce': enforce if enforce else order['timeInForce'],
                 'serialId': str(uuid.uuid4()), 
-                'orders': [{'quantity': quant if quant > 0 else order['totalQuantity'],
-                            'action': action if action else order['action'],
+                'orders': [{'quantity': quant if int(quant) > 0 else order['totalQuantity'],
+                            'action': order['action'],
                             'tickerId': order['optionId'],
                             'tickerType': 'OPTION'}]}
         
