@@ -496,10 +496,10 @@ class webull :
         if order['orderType'] == 'LMT' and lmtPrice:
             data['lmtPrice'] = float(lmtPrice)
         if orderType == 'STP' and stpPrice:
-            data['auxPrice'] = float(stpPrice),
+            data['auxPrice'] = float(stpPrice)
         if orderType == 'STP LMT' and lmtPrice and stpPrice:
-            data['lmtPrice'] = float(lmtPrice),
-            data['auxPrice'] = float(stpPrice),
+            data['lmtPrice'] = float(lmtPrice)
+            data['auxPrice'] = float(stpPrice)
 
         response = requests.post(url, json=data, headers=headers)
         if response.status_code != 200:
