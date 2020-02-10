@@ -493,7 +493,7 @@ class webull :
             'orders': [{'quantity': quant, 'action': action, 'tickerId': optionId, 'tickerType': 'OPTION'}],
         }
 
-        if order['orderType'] == 'LMT' and lmtPrice:
+        if orderType == 'LMT' and lmtPrice:
             data['lmtPrice'] = float(lmtPrice)
         if orderType == 'STP' and stpPrice:
             data['auxPrice'] = float(stpPrice)
