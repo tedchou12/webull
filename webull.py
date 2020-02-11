@@ -179,6 +179,125 @@ class webull :
         else :
             return False
 
+    def alerts_list(self):
+        '''
+        Get alerts
+        '''
+        headers = self.build_req_headers()
+        url = 'https://userapi.webullbroker.com/api/user/warning/v2/query/tickers'
+        
+        response = requests.get(url, headers=headers)
+        result = response.json()
+        return result.get('data', [])
+
+    def alerts_remove(self, alert=None, priceAlert=True, smartAlert=True):
+        '''
+        remove alert
+        alert is retrieved from alert_list
+        '''
+        headers = self.build_req_headers()
+        url = 'https://userapi.webullbroker.com/api/user/warning/v2/manage/overlap'
+
+        if alert.get('tickerWarning') and priceAlert:
+            alert['tickerWarning']['remove'] = True
+            alert['warningInput'] = alert['tickerWarning']
+
+        if alert.get('eventWarning') and smartAlert:
+            alert['eventWarning']['remove'] = True
+            for rule in alert['eventWarning']['rules']:
+                rule['active'] = 'off'
+            alert['eventWarningInput'] = alert['eventWarning']
+
+        response = requests.post(url, json=alert, headers=headers)
+        if response.status_code != 200:
+            raise Exception('alerts_remove failed', response.status_code, response.reason)
+        return True
+        
+    def alerts_add(self, stock=None, frequency=1, interval=1, priceRules=[], smartRules=[]):
+        '''
+        add price/percent/volume alert
+        frequency: 1 is once a day, 2 is once a minute
+        interval: 1 is once, 0 is repeating
+        priceRules: list of dicts with below attributes per alert
+            field: price , percent , volume
+            type: price (above/below), percent (above/below), volume (vol in thousands)
+            value: price, percent, volume amount
+            remark: comment
+        rules example:
+        priceRules = [{'field': 'price', 'type': 'above', 'value': '900.00', 'remark': 'above'}, {'field': 'price', 'type': 'below',
+             'value': '900.00', 'remark': 'below'}]
+        smartRules = [{'type':'earnPre','active':'on'},{'type':'fastUp','active':'on'},{'type':'fastDown','active':'on'},
+            {'type':'week52Up','active':'on'},{'type':'week52Down','active':'on'},{'type':'day5Down','active':'on'}]
+        '''
+        headers = self.build_req_headers()
+        url = 'https://userapi.webullbroker.com/api/user/warning/v2/manage/overlap'
+        
+        rule_keys = ['value', 'field', 'remark', 'type', 'active']
+        for line, rule in enumerate(priceRules, start=1):
+            for key in rule:
+                if key not in rule_keys:
+                    raise Exception('malformed price alert priceRules found.')
+            rule['alertRuleKey'] = line
+            rule['active'] = 'on'
+
+        alert_keys = ['earnPre', 'fastUp', 'fastDown', 'week52Up', 'week52Down', 'day5Up', 'day10Up', 'day20Up', 'day5Down', 'day10Down', 'day20Down']
+        for rule in smartRules:
+            if rule['type'] not in alert_keys:
+                raise Exception('malformed smart alert smartRules found.')
+        
+        try:
+            stock_data = self.get_tradable(stock)['data'][0]
+            data = {'regionId': stock_data['regionId'],
+                'tickerType': stock_data['type'],
+                'tickerId': stock_data['tickerId'],
+                'tickerSymbol': stock,
+                'disSymbol': stock,
+                'tinyName': stock_data['name'],
+                'tickerName': stock_data['name'],
+                'exchangeCode': stock_data['exchangeCode'],
+                'showCode': stock_data['disExchangeCode'],
+                'disExchangeCode': stock_data['disExchangeCode'],
+                'eventWarningInput': {
+                    'tickerId': stock_data['tickerId'],
+                    'rules': smartRules,
+                    'remove': False,
+                    'del': False
+                    },
+                'warningInput': {
+                    'warningFrequency': frequency,
+                    'warningInterval': interval,
+                    'rules': priceRules,
+                    'tickerId': stock_data['tickerId']}
+                }
+        except Exception as e:
+            print(f'failed to build alerts_add payload data. error: {e}')
+        
+        response = requests.post(url, json=data, headers=headers)
+        if response.status_code != 200:
+            raise Exception('alerts_add failed', response.status_code, response.reason)
+        return True
+
+    def get_active_gainer_loser(self, direction='gainer') :
+        '''
+        gets active / gainer / loser stocks sorted by change
+        direction: active / gainer / loser
+        '''
+        headers = self.build_req_headers()
+
+        if direction == 'gainer':
+            url = 'https://securitiesapi.webullbroker.com/api/securities/market/v5/card/stockActivityPc.advanced/list'
+        if direction == 'loser':
+            url = 'https://securitiesapi.webullbroker.com/api/securities/market/v5/card/stockActivityPc.declined/list'
+        if direction == 'active':
+            url = 'https://securitiesapi.webullbroker.com/api/securities/market/v5/card/stockActivityPc.active/list'
+
+        params = {'regionId': 6, 'userRegionId': 6}
+        response = requests.get(url, params=params, headers=headers)
+        result = response.json()
+        result = sorted(result, key=lambda k: k['change'], reverse=True)
+
+        return result
+
     '''
     lookup ticker_id
     '''
@@ -195,12 +314,12 @@ class webull :
     '''
     ordering
     '''
-    def place_order(self, stock='', price=0, action='BUY', type='LMT', enforce='GTC', quant=0):
+    def place_order(self, stock='', price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
          headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
          data = {'action': action, #  BUY or SELL
                  'lmtPrice': float(price),
-                 'orderType': type, # "LMT","MKT","STP","STP LMT"
+                 'orderType': orderType, # "LMT","MKT","STP","STP LMT"
                  'outsideRegularTradingHour': True,
                  'quantity': int(quant),
                  'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
@@ -294,6 +413,16 @@ class webull :
 
         return result
 
+    def get_option_quote(self, stock=None, optionId=None) :
+        '''
+        get option quote
+        '''
+        headers = self.build_req_headers()
+        stock = self.get_ticker(stock)
+        url = f'https://quotes-gw.webullbroker.com/api/quote/option/query/list'
+        params = {'tickerId': int(stock), 'derivativeIds': int(optionId)}
+        return requests.get(url, params=params, headers=headers).json()
+
     def get_analysis(self, stock=None) :
         '''
         get analysis info and returns a dict of analysis ratings
@@ -319,12 +448,13 @@ class webull :
         params = {'currentNewsId': Id, 'pageSize': items}
         return requests.get(url, params=params).json()
 
-    def get_options_expiration_dates(self, stock=None) :
+    def get_options_expiration_dates(self, stock=None, count=-1) :
         '''
         returns a list of options expiration dates
         '''
         url = f'https://quoteapi.webullbroker.com/api/quote/option/{self.get_ticker(stock)}/list'
-        return requests.get(url).json()['expireDateList']
+        data = {'count': count}
+        return requests.get(url, params=data).json()['expireDateList']
 
     def get_options(self, stock=None, count=-1, includeWeekly=1, direction='all', expireDate=None, queryAll=0) :
         '''
@@ -337,11 +467,18 @@ class webull :
             expireDate: contract expire date
             queryAll: 0
         '''
+        # get next closet expiredate if none is provided
         if not expireDate:
-            expireDate = self.get_options_expiration_dates(stock)[0]['date']
+            dates = self.get_options_expiration_dates(stock)[0]['date']
+            # ensure we don't provide an option that has < 1 day to expire
+            for d in dates:
+                if d['days'] > 0:
+                    expireDate = d['date']
+                    break
+
         url = f'https://quoteapi.webullbroker.com/api/quote/option/{self.get_ticker(stock)}/list'
         params = {'count': count, 'includeWeekly': includeWeekly, 'direction': direction,
-            'unSymbol': stock, 'queryAll': queryAll}
+            'expireDate': expireDate, 'unSymbol': stock, 'queryAll': queryAll}
         return requests.get(url, params=params).json()['data']
 
     def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all') :
@@ -352,28 +489,74 @@ class webull :
         opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
         return [c for c in opts if c['strikePrice'] == strike]
 
-    """
-    get a list of options contracts by expire date and strike price
-    stock: string
-    price: float
-    action: string BUY / SELL
-    type: MKT / LMT
-    enforce: GTC / DAY
-    quant: int
-    """
-    def place_option_order(self, stock='', price='', action='', type='LMT', enforce='GTC', quant=0) :
+    def place_option_order(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0) :
+        """
+        create buy / sell order
+        stock: string
+        lmtPrice: float
+        stpPrice: float
+        action: string BUY / SELL
+        optionId: string
+        orderType: LMT / STP / STP LMT
+        enforce: DAY
+        quant: int
+        """
+        url = f'https://tradeapi.webulltrade.com/api/trade/v2/option/placeOrder/{self.account_id}'
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
-        data = {'lmtPrice': float(price),
-                'orderType': type, # "LMT","MKT"
-                'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
-                'orders': {'quantity': quant, 'action': action, 'tickerId': self.get_ticker(stock), 'tickerType': 'OPTION'},
-                'timeInForce': enforce} # GTC or DAY or IOC
+        data = {
+            'orderType': orderType,
+            'serialId': str(uuid.uuid4()),
+            'timeInForce': enforce,
+            'orders': [{'quantity': quant, 'action': action, 'tickerId': optionId, 'tickerType': 'OPTION'}],
+        }
 
-        response = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/option/checkOrder/' + self.account_id, json=data, headers=headers)
-        result = response.json()
+        if orderType == 'LMT' and lmtPrice:
+            data['lmtPrice'] = float(lmtPrice)
+        if orderType == 'STP' and stpPrice:
+            data['auxPrice'] = float(stpPrice)
+        if orderType == 'STP LMT' and lmtPrice and stpPrice:
+            data['lmtPrice'] = float(lmtPrice)
+            data['auxPrice'] = float(stpPrice)
 
-        return result['success']
+        response = requests.post(url, json=data, headers=headers)
+        if response.status_code != 200:
+            raise Exception('place_option_order failed', response.status_code, response.reason)
+        return True
+
+    def replace_option_order(self, order=None, lmtPrice=None, stpPrice=None, enforce=None, quant=0):
+        '''
+        order: dict from get_current_orders
+        stpPrice: float
+        lmtPrice: float
+        enforce: DAY
+        quant: int
+        '''
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+
+        data = {'comboId': order['comboId'],
+                'orderType': order['orderType'],
+                'timeInForce': enforce if enforce else order['timeInForce'],
+                'serialId': str(uuid.uuid4()), 
+                'orders': [{'quantity': quant if int(quant) > 0 else order['totalQuantity'],
+                            'action': order['action'],
+                            'tickerId': order['ticker']['tickerId'],
+                            'tickerType': 'OPTION',
+                            'orderId': order['orderId']}]}
+        
+        if order['orderType'] == 'LMT' and (lmtPrice or order['lmtPrice']):
+            data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
+        if order['orderType'] and (stpPrice or order['auxPrice']):
+            data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
+        if order['orderType'] == 'STP LMT' and (stpPrice or order['auxPrice']) and (lmtPrice or order['lmtPrice']):
+            data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
+            data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
+    
+        url = f'https://tradeapi.webulltrade.com/api/trade/v2/option/replaceOrder/{self.account_id}'
+        response = requests.post(url, json=data, headers=headers)
+        if response.status_code != 200:
+            raise Exception('replace_option_order failed', response.status_code, response.reason)
+        return True
 
     def get_bars(self, stock=None, interval='m1', count=1, extendTrading=0) :
         '''
