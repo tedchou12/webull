@@ -241,6 +241,9 @@ class webull :
             rule['active'] = 'on'
 
         alert_keys = ['earnPre', 'fastUp', 'fastDown', 'week52Up', 'week52Down', 'day5Up', 'day10Up', 'day20Up', 'day5Down', 'day10Down', 'day20Down']
+        for rule in smartRules:
+            if rule['type'] not in alert_keys:
+                raise Exception('malformed smart alert smartRules found.')
         
         try:
             stock_data = self.get_tradable(stock)['data'][0]
@@ -492,7 +495,7 @@ class webull :
         opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
         return [c for c in opts if c['strikePrice'] == strike]
 
-    def place_option_order(self, optionId=None, ltmPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0) :
+    def place_option_order(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0) :
         """
         create buy / sell order
         stock: string
