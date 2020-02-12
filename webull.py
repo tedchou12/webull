@@ -1,3 +1,4 @@
+import getpass
 import json
 import requests
 import uuid
@@ -62,11 +63,26 @@ class webull :
         else :
             return False
 
+    def login_prompt(self):
+        """
+        End login session
+        """
+        uname = input("Enter Webull Username:")
+        pwd = getpass.getpass("Enter Webull Password:")
+        self.trade_pin = getpass.getpass("Enter 6 digit Webull Trade PIN:")
+        self.login(uname, pwd)
+        return self.get_trade_token(self.trade_pin)
+
     def logout(self):
         """
         End login session
         """
-        return False
+        headers = self.build_req_headers()
+        response = requests.get(urls.logout(), headers=headers)
+        if response.status_code != 200:
+            return False
+        else:
+            return True
 
     def refresh_login(self) :
         # password = md5_hash.hexdigest()
@@ -206,9 +222,8 @@ class webull :
         Get alerts
         '''
         headers = self.build_req_headers()
-        url = 'https://userapi.webullbroker.com/api/user/warning/v2/query/tickers'
 
-        response = requests.get(url, headers=headers)
+        response = requests.get(urls.list_alerts(), headers=headers)
         result = response.json()
         return result.get('data', [])
 
@@ -218,7 +233,6 @@ class webull :
         alert is retrieved from alert_list
         '''
         headers = self.build_req_headers()
-        url = 'https://userapi.webullbroker.com/api/user/warning/v2/manage/overlap'
 
         if alert.get('tickerWarning') and priceAlert:
             alert['tickerWarning']['remove'] = True
@@ -230,7 +244,7 @@ class webull :
                 rule['active'] = 'off'
             alert['eventWarningInput'] = alert['eventWarning']
 
-        response = requests.post(url, json=alert, headers=headers)
+        response = requests.post(urls.remove_alert(), json=alert, headers=headers)
         if response.status_code != 200:
             raise Exception('alerts_remove failed', response.status_code, response.reason)
         return True
@@ -252,7 +266,6 @@ class webull :
             {'type':'week52Up','active':'on'},{'type':'week52Down','active':'on'},{'type':'day5Down','active':'on'}]
         '''
         headers = self.build_req_headers()
-        url = 'https://userapi.webullbroker.com/api/user/warning/v2/manage/overlap'
 
         rule_keys = ['value', 'field', 'remark', 'type', 'active']
         for line, rule in enumerate(priceRules, start=1):
@@ -294,7 +307,7 @@ class webull :
         except Exception as e:
             print(f'failed to build alerts_add payload data. error: {e}')
 
-        response = requests.post(url, json=data, headers=headers)
+        response = requests.post(urls.add_alert(), json=data, headers=headers)
         if response.status_code != 200:
             raise Exception('alerts_add failed', response.status_code, response.reason)
         return True
@@ -306,15 +319,8 @@ class webull :
         '''
         headers = self.build_req_headers()
 
-        if direction == 'gainer':
-            url = 'https://securitiesapi.webullbroker.com/api/securities/market/v5/card/stockActivityPc.advanced/list'
-        if direction == 'loser':
-            url = 'https://securitiesapi.webullbroker.com/api/securities/market/v5/card/stockActivityPc.declined/list'
-        if direction == 'active':
-            url = 'https://securitiesapi.webullbroker.com/api/securities/market/v5/card/stockActivityPc.active/list'
-
         params = {'regionId': 6, 'userRegionId': 6}
-        response = requests.get(url, params=params, headers=headers)
+        response = requests.get(urls.active_gainers_losers(direction), params=params, headers=headers)
         result = response.json()
         result = sorted(result, key=lambda k: k['change'], reverse=True)
 
@@ -373,7 +379,7 @@ class webull :
              "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
              "lmtPrice": float(limit_profit_price), "comboType": "STOP_PROFIT"}]}
 
-        response1 = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/corder/stock/check/' + self.account_id,
+        response1 = requests.post(urls.check_otoco_orders(self.account_id),
                                   json=data1, headers=headers)
         result1 = response1.json()
 
@@ -390,9 +396,7 @@ class webull :
                  "lmtPrice": float(limit_profit_price), "comboType": "STOP_PROFIT", "serialId": str(uuid.uuid4())}],
                 "serialId": str(uuid.uuid4())}
 
-            response2 = requests.post(
-                'https://tradeapi.webulltrade.com/api/trade/v2/corder/stock/place/' + self.account_id,
-                json=data2, headers=headers)
+            response2 = requests.post(urls.place_otoco_orders(self.account_id), json=data2, headers=headers)
 
             print("Resp 2: {}".format(response2))
             return True
@@ -422,7 +426,7 @@ class webull :
 
         data = { "serialId": str(uuid.uuid4()), "cancelOrders": [str(order_id)]}
 
-        response = requests.post('https://tradeapi.webulltrade.com/api/trade/v2/corder/stock/modify/' + self.account_id,
+        response = requests.post(urls.cancel_otoco_orders(self.account_id),
                                  json=data, headers=headers)
         return response.json()
 
@@ -441,9 +445,8 @@ class webull :
         '''
         headers = self.build_req_headers()
         stock = self.get_ticker(stock)
-        url = f'https://quotes-gw.webullbroker.com/api/quote/option/query/list'
         params = {'tickerId': int(stock), 'derivativeIds': int(optionId)}
-        return requests.get(url, params=params, headers=headers).json()
+        return requests.get(urls.option_quotes(), params=params, headers=headers).json()
 
     def get_analysis(self, stock=None) :
         '''
@@ -494,10 +497,9 @@ class webull :
                     expireDate = d['date']
                     break
 
-        url = f'https://quoteapi.webullbroker.com/api/quote/option/{self.get_ticker(stock)}/list'
         params = {'count': count, 'includeWeekly': includeWeekly, 'direction': direction,
             'expireDate': expireDate, 'unSymbol': stock, 'queryAll': queryAll}
-        return requests.get(url, params=params).json()['data']
+        return requests.get(urls.options(self.get_ticker(stock)), params=params).json()['data']
 
     def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all') :
         """
@@ -569,8 +571,7 @@ class webull :
             data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
             data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
 
-        url = f'https://tradeapi.webulltrade.com/api/trade/v2/option/replaceOrder/{self.account_id}'
-        response = requests.post(url, json=data, headers=headers)
+        response = requests.post(urls.replace_option_orders(self.account_id), json=data, headers=headers)
         if response.status_code != 200:
             raise Exception('replace_option_order failed', response.status_code, response.reason)
         return True
@@ -583,11 +584,10 @@ class webull :
             count: number of bars to return
             extendTrading: change to 1 for pre-market and afterhours bars
         '''
-        url = f'https://quoteapi.webull.com/api/quote/tickerChartDatas/v5/{self.get_ticker(stock)}'
         params = {'type': interval, 'count': count, 'extendTrading': extendTrading}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
-        response = requests.get(url, params=params)
+        response = requests.get(urls.bars(self.get_ticker(stock)), params=params)
         for row in response.json()[0]['data']:
             row = row.split(',')
             row = ['0' if value == 'null' else value for value in row]
