@@ -6,6 +6,7 @@ import hashlib
 import time
 from datetime import datetime
 from pandas import DataFrame, to_datetime
+import collections
 
 import urls
 
@@ -327,6 +328,38 @@ class webull :
         return result
 
     '''
+    run a screener  (screeners are not sent by name, just the parameters are sent)
+    just a start, add more as you need it
+    '''
+    def run_screener(self, region=None, price_lte=None, price_gte=None, pct_chg_gte=None, pct_chg_lte=None, sort=None,
+                     sort_dir=None):
+        # if screener=="penny poppers":
+        jdict = collections.defaultdict(str)
+        jdict["fetch"] = 200
+        jdict["rules"] = collections.defaultdict(str)
+        jdict["sort"] = collections.defaultdict(str)
+        jdict["attach"] = {"hkexPrivilege": "true"}  #unknown meaning, was in network trace
+
+        jdict["rules"]["wlas.screener.rule.region"] = "securities.region.name.6"
+        if not price_lte is None and not price_gte is None:
+            # lte and gte are backwards
+            jdict["rules"]["wlas.screener.rule.price"] = "gte=" + str(price_lte) + "&lte=" + str(price_gte)
+
+        if not pct_chg_lte is None and not pct_chg_gte is None:
+            # lte and gte are backwards
+            jdict["rules"]["wlas.screener.rule.changeRatio"] = "gte=" + str(pct_chg_lte) + "&lte=" + str(pct_chg_gte)
+
+        if sort is None:
+            jdict["sort"]["rule"] = "wlas.screener.rule.price"
+        if sort_dir is None:
+            jdict["sort"]["desc"] = "true"
+
+        # jdict = self._ddict2dict(jdict)
+        response = requests.post(urls.screener(), json=jdict)
+        result = response.json()
+        return result
+
+    '''
     lookup ticker_id
     '''
     def get_ticker(self, stock='') :
@@ -433,8 +466,15 @@ class webull :
     '''
     get price quote
     '''
-    def get_quote(self, stock='') :
-        response = requests.get(urls.quotes(self.get_ticker(stock)))
+    def get_quote(self, stock=None, tId=None) :
+        if not stock is None:
+            tId = self.get_ticker(stock)
+        elif not tId is None:
+            tId = str(tId)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
+        response = requests.get(urls.quotes(tId))
         result = response.json()
 
         return result
@@ -576,7 +616,7 @@ class webull :
             raise Exception('replace_option_order failed', response.status_code, response.reason)
         return True
 
-    def get_bars(self, stock=None, interval='m1', count=1, extendTrading=0) :
+    def get_bars(self, stock=None, tId = None, interval='m1', count=1, extendTrading=0) :
         '''
         get bars returns a pandas dataframe
         params:
@@ -584,10 +624,17 @@ class webull :
             count: number of bars to return
             extendTrading: change to 1 for pre-market and afterhours bars
         '''
+        if not stock is None:
+            tId = self.get_ticker(stock)
+        elif not tId is None:
+            tId = str(tId)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
         params = {'type': interval, 'count': count, 'extendTrading': extendTrading}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
-        response = requests.get(urls.bars(self.get_ticker(stock)), params=params)
+        response = requests.get(urls.bars(tId), params=params)
         for row in response.json()[0]['data']:
             row = row.split(',')
             row = ['0' if value == 'null' else value for value in row]
@@ -595,6 +642,17 @@ class webull :
                 'close': float(row[2]), 'volume': float(row[6]), 'vwap': float(row[7])}
             df.loc[datetime.fromtimestamp(int(row[0]))] = data
         return df.iloc[::-1]
+
+
+    def get_calendar(self):
+        params = {'type': 'm1', 'count': 1, 'extendTrading': 0}
+        response = requests.get(urls.bars(self.get_ticker('AAPL')), params=params)
+        data = response.json()
+        last_trade_date = datetime.fromtimestamp(int(data[0]['data'][0].split(',')[0]))
+        for d in data[0]['dates']:
+            if d['type'] == 'T':
+                return {'start':d['start'],  'end':d['end'], 'last trade':last_trade_date}
+
 
     def get_dividends(self):
         """ Return account's dividend info """
