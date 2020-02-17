@@ -328,12 +328,17 @@ class webull :
         return result
 
     '''
-    run a screener  (screeners are not sent by name, just the parameters are sent)
-    just a start, add more as you need it
+    Run a screener  
     '''
     def run_screener(self, region=None, price_lte=None, price_gte=None, pct_chg_gte=None, pct_chg_lte=None, sort=None,
                      sort_dir=None):
-        # if screener=="penny poppers":
+        """
+        Notice the fact that endpoints are reversed on lte and gte, but this function makes it work correctly
+        Also screeners are not sent by name, just the parameters are sent
+        example: run_screener( price_lte=.10, price_gte=5, pct_chg_lte=.035, pct_chg_gte=.51)
+        just a start, add more as you need it
+        """
+
         jdict = collections.defaultdict(str)
         jdict["fetch"] = 200
         jdict["rules"] = collections.defaultdict(str)
@@ -467,10 +472,10 @@ class webull :
     get price quote
     '''
     def get_quote(self, stock=None, tId=None) :
-        if not stock is None:
+        if not tId is None:
+            pass
+        elif not stock is None:
             tId = self.get_ticker(stock)
-        elif not tId is None:
-            tId = str(tId)
         else:
             raise ValueError('Must provide a stock symbol or a stock id')
 
@@ -624,10 +629,10 @@ class webull :
             count: number of bars to return
             extendTrading: change to 1 for pre-market and afterhours bars
         '''
-        if not stock is None:
+        if not tId is None:
+            pass
+        elif not stock is None:
             tId = self.get_ticker(stock)
-        elif not tId is None:
-            tId = str(tId)
         else:
             raise ValueError('Must provide a stock symbol or a stock id')
 
@@ -644,14 +649,30 @@ class webull :
         return df.iloc[::-1]
 
 
-    def get_calendar(self):
+    def get_calendar(self,stock=None, tId=None):
+        """
+        There doesn't seem to be a way to get the times the market is open outside of the charts.
+        So, best way to tell if the market is open is to pass in a popular stock like AAPL then
+        and see the open and close hours are as would be marked on the chart
+        and see if the last trade date is the same day as today's date
+        :param stock:
+        :param tId:
+        :return: dict of 'market open', 'market close', 'last trade date'
+        """
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
         params = {'type': 'm1', 'count': 1, 'extendTrading': 0}
-        response = requests.get(urls.bars(self.get_ticker('AAPL')), params=params)
+        response = requests.get(urls.bars(tId), params=params)
         data = response.json()
         last_trade_date = datetime.fromtimestamp(int(data[0]['data'][0].split(',')[0]))
         for d in data[0]['dates']:
             if d['type'] == 'T':
-                return {'start':d['start'],  'end':d['end'], 'last trade':last_trade_date}
+                return {'market open':d['start'],  'market close':d['end'], 'last trade date':last_trade_date}
 
 
     def get_dividends(self):
@@ -682,3 +703,5 @@ if __name__ == '__main__' :
         webull.cancel_order(order['orderId'])
     # print(webull.get_serial_id())
     # print(webull.get_ticker('BABA'))
+
+
