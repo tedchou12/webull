@@ -14,10 +14,10 @@ def account(account_id):
 def account_id():
     return f'{base_trade_url}/account/getSecAccountList/v4'
 
-def active_gainers_losers(dir):
-    if dir == 'gainer':
+def active_gainers_losers(direction):
+    if direction == 'gainer':
         url = 'advanced'
-    elif dir == 'loser':
+    elif direction == 'loser':
         url = 'declined'
     else:
         url = 'active'
@@ -79,6 +79,15 @@ def paper_account(paper_account_id):
 
 def paper_account_id():
     return f'{base_paper_url}/myaccounts/true'
+
+def paper_cancel_order(paper_account_id, order_id):
+    return f'{base_paper_url}/paper/1/acc/{paper_account_id}/orderop/cancel/{order_id}'
+
+def paper_modify_order(paper_account_id, order_id):
+    return f'{base_paper_url}/paper/1/acc/{paper_account_id}/orderop/modify/{order_id}'
+
+def paper_place_order(paper_account_id, stock):
+    return f'{base_paper_url}/paper/1/acc/{paper_account_id}/orderop/place/{stock}'
 
 def place_option_orders(account_id):
     return f'{base_trade_url}/v2/option/checkOrder/{account_id}'

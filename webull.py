@@ -1,3 +1,4 @@
+import argparse
 import getpass
 import json
 import requests
@@ -9,8 +10,8 @@ from pandas import DataFrame, to_datetime
 
 import urls
 
-class webull :
-    def __init__(self) :
+class webull:
+    def __init__(self):
         self.session = requests.session()
         self.headers = {
             "Accept": "*/*",
@@ -41,7 +42,7 @@ class webull :
     '''
     for login purposes password need to be hashed password, figuring out what hash function is used currently.
     '''
-    def login(self, username='', password='') :
+    def login(self, username='', password=''):
         # with webull md5 hash salted
         password = ('wl_app-a&b@!423^' + password).encode('utf-8')
         md5_hash = hashlib.md5(password)
@@ -54,13 +55,13 @@ class webull :
         response = requests.post(urls.login(), json=data, headers=self.headers)
 
         result = response.json()
-        if result['success'] and result['code'] == '200' :
+        if result:
             self.access_token = result['data']['accessToken']
             self.refresh_token = result['data']['refreshToken']
             self.token_expire = result['data']['tokenExpireTime']
             self.uuid = result['data']['uuid']
             return True
-        else :
+        else:
             return False
 
     def login_prompt(self):
@@ -84,7 +85,7 @@ class webull :
         else:
             return True
 
-    def refresh_login(self) :
+    def refresh_login(self):
         # password = md5_hash.hexdigest()
         headers = self.build_req_headers()
 
@@ -93,19 +94,19 @@ class webull :
         response = requests.post(urls.refresh_login() + self.refresh_token, json=data, headers=headers)
 
         result = response.json()
-        if 'accessToken' in result and result['accessToken'] != '' and result['refreshToken'] != '' and result['tokenExpireTime'] != '' :
+        if 'accessToken' in result and result['accessToken'] != '' and result['refreshToken'] != '' and result['tokenExpireTime'] != '':
             self.access_token = result['accessToken']
             self.refresh_token = result['refreshToken']
             self.token_expire = result['tokenExpireTime']
             return True
-        else :
+        else:
             return False
 
 
     '''
     get some contact details of your account name, email/phone, region, avatar...etc
     '''
-    def get_detail(self) :
+    def get_detail(self):
         headers = self.build_req_headers()
 
         response = requests.get(urls.user(), headers=headers)
@@ -117,7 +118,7 @@ class webull :
     get account id
     call account id before trade actions
     '''
-    def get_account_id(self) :
+    def get_account_id(self):
         headers = self.build_req_headers()
 
         response = requests.get(urls.account_id(), headers=headers)
@@ -126,25 +127,13 @@ class webull :
         if result['success']:
             self.account_id = str(result['data'][0]['secAccountId'])
             return True
-        else :
+        else:
             return False
-
-    def get_paper_account_id(self):
-        """
-        Get paper account id: call this before paper acct actions
-        """
-        headers = self.build_req_headers()
-
-        response = requests.get(urls.paper_account_id(),
-                                headers=headers)
-        result = response.json()
-        self.paper_account_id = result[0]['id']
-        return True
 
     '''
     get important details of account, positions, portfolio stance...etc
     '''
-    def get_account(self) :
+    def get_account(self):
         headers = self.build_req_headers()
 
         response = requests.get(urls.account(self.account_id), headers=headers)
@@ -152,16 +141,10 @@ class webull :
 
         return result
 
-    def get_paper_account(self):
-        """ Get important details of paper account """
-        headers = self.build_req_headers()
-        response = requests.get(urls.paper_account(self.paper_account_id), headers=headers)
-        return response.json()
-
     '''
     output standing positions of stocks
     '''
-    def get_positions(self) :
+    def get_positions(self):
         data = self.get_account()
 
         return data['positions']
@@ -169,11 +152,11 @@ class webull :
     '''
     output numbers of portfolio
     '''
-    def get_portfolio(self) :
+    def get_portfolio(self):
         data = self.get_account()
 
         output = {}
-        for item in data['accountMembers'] :
+        for item in data['accountMembers']:
             output[item['key']] = item['value']
 
         return output
@@ -181,7 +164,7 @@ class webull :
     '''
     Get open/standing orders
     '''
-    def get_current_orders(self) :
+    def get_current_orders(self):
         data = self.get_account()
 
         return data['openOrders']
@@ -199,7 +182,7 @@ class webull :
     '''
     authorize trade, must be done before trade action
     '''
-    def get_trade_token(self, password='') :
+    def get_trade_token(self, password=''):
         headers = self.build_req_headers()
 
         # with webull md5 hash salted
@@ -214,7 +197,7 @@ class webull :
         if result['success']:
             self.trade_token = result['data']['tradeToken']
             return True
-        else :
+        else:
             return False
 
     def alerts_list(self):
@@ -283,27 +266,28 @@ class webull :
         try:
             stock_data = self.get_tradable(stock)['data'][0]
             data = {'regionId': stock_data['regionId'],
-                'tickerType': stock_data['type'],
-                'tickerId': stock_data['tickerId'],
-                'tickerSymbol': stock,
-                'disSymbol': stock,
-                'tinyName': stock_data['name'],
-                'tickerName': stock_data['name'],
-                'exchangeCode': stock_data['exchangeCode'],
-                'showCode': stock_data['disExchangeCode'],
-                'disExchangeCode': stock_data['disExchangeCode'],
-                'eventWarningInput': {
+                    'tickerType': stock_data['type'],
                     'tickerId': stock_data['tickerId'],
-                    'rules': smartRules,
-                    'remove': False,
-                    'del': False
+                    'tickerSymbol': stock,
+                    'disSymbol': stock,
+                    'tinyName': stock_data['name'],
+                    'tickerName': stock_data['name'],
+                    'exchangeCode': stock_data['exchangeCode'],
+                    'showCode': stock_data['disExchangeCode'],
+                    'disExchangeCode': stock_data['disExchangeCode'],
+                    'eventWarningInput': {
+                        'tickerId': stock_data['tickerId'],
+                        'rules': smartRules,
+                        'remove': False,
+                        'del': False
                     },
-                'warningInput': {
-                    'warningFrequency': frequency,
-                    'warningInterval': interval,
-                    'rules': priceRules,
-                    'tickerId': stock_data['tickerId']}
-                }
+                    'warningInput': {
+                        'warningFrequency': frequency,
+                        'warningInterval': interval,
+                        'rules': priceRules,
+                        'tickerId': stock_data['tickerId']
+                        }
+                    }
         except Exception as e:
             print(f'failed to build alerts_add payload data. error: {e}')
 
@@ -312,7 +296,7 @@ class webull :
             raise Exception('alerts_add failed', response.status_code, response.reason)
         return True
 
-    def get_active_gainer_loser(self, direction='gainer') :
+    def get_active_gainer_loser(self, direction='gainer'):
         '''
         gets active / gainer / loser stocks sorted by change
         direction: active / gainer / loser
@@ -329,35 +313,35 @@ class webull :
     '''
     lookup ticker_id
     '''
-    def get_ticker(self, stock='') :
-         response = requests.get(urls.stock_id(stock))
-         result = response.json()
+    def get_ticker(self, stock=''):
+        response = requests.get(urls.stock_id(stock))
+        result = response.json()
 
-         ticker_id = 0
-         if len(result['list']) == 1 :
-             for item in result['list'] :
-                 ticker_id = item['tickerId']
-         return ticker_id
+        ticker_id = 0
+        if len(result['list']) == 1:
+            for item in result['list']:
+                ticker_id = item['tickerId']
+        return ticker_id
 
     '''
     ordering
     '''
     def place_order(self, stock='', price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
-         headers = self.build_req_headers(include_trade_token=True, include_time=True)
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
-         data = {'action': action, #  BUY or SELL
-                 'lmtPrice': float(price),
-                 'orderType': orderType, # "LMT","MKT","STP","STP LMT"
-                 'outsideRegularTradingHour': True,
-                 'quantity': int(quant),
-                 'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
-                 'tickerId': self.get_ticker(stock),
-                 'timeInForce': enforce} # GTC or DAY or IOC
+        data = {'action': action, #  BUY or SELL
+                'lmtPrice': float(price),
+                'orderType': orderType, # "LMT","MKT","STP","STP LMT"
+                'outsideRegularTradingHour': True,
+                'quantity': int(quant),
+                'serialId': str(uuid.uuid4()), #'f9ce2e53-31e2-4590-8d0d-f7266f2b5b4f'
+                'tickerId': self.get_ticker(stock),
+                'timeInForce': enforce} # GTC or DAY or IOC
 
-         response = requests.post(urls.place_orders(self.account_id), json=data, headers=headers)
-         result = response.json()
+        response = requests.post(urls.place_orders(self.account_id), json=data, headers=headers)
+        result = response.json()
 
-         return result['success']
+        return result['success']
 
     '''
     OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
@@ -433,13 +417,13 @@ class webull :
     '''
     get price quote
     '''
-    def get_quote(self, stock='') :
+    def get_quote(self, stock=''):
         response = requests.get(urls.quotes(self.get_ticker(stock)))
         result = response.json()
 
         return result
 
-    def get_option_quote(self, stock=None, optionId=None) :
+    def get_option_quote(self, stock=None, optionId=None):
         '''
         get option quote
         '''
@@ -448,13 +432,13 @@ class webull :
         params = {'tickerId': int(stock), 'derivativeIds': int(optionId)}
         return requests.get(urls.option_quotes(), params=params, headers=headers).json()
 
-    def get_analysis(self, stock=None) :
+    def get_analysis(self, stock=None):
         '''
         get analysis info and returns a dict of analysis ratings
         '''
         return requests.get(urls.analysis(self.get_ticker(stock))).json()
 
-    def get_financials(self, stock=None) :
+    def get_financials(self, stock=None):
         '''
         get financials info and returns a dict of financial info
         '''
@@ -477,7 +461,7 @@ class webull :
         data = {'count': count}
         return requests.get(urls.options_exp_date(self.get_ticker(stock)), params=data).json()['expireDateList']
 
-    def get_options(self, stock=None, count=-1, includeWeekly=1, direction='all', expireDate=None, queryAll=0) :
+    def get_options(self, stock=None, count=-1, includeWeekly=1, direction='all', expireDate=None, queryAll=0):
         '''
         get options and returns a dict of options contracts
         params:
@@ -498,10 +482,10 @@ class webull :
                     break
 
         params = {'count': count, 'includeWeekly': includeWeekly, 'direction': direction,
-            'expireDate': expireDate, 'unSymbol': stock, 'queryAll': queryAll}
+                'expireDate': expireDate, 'unSymbol': stock, 'queryAll': queryAll}
         return requests.get(urls.options(self.get_ticker(stock)), params=params).json()['data']
 
-    def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all') :
+    def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all'):
         """
         get a list of options contracts by expire date and strike price
         strike: string
@@ -509,7 +493,7 @@ class webull :
         opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
         return [c for c in opts if c['strikePrice'] == strike]
 
-    def place_option_order(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0) :
+    def place_option_order(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0):
         """
         create buy / sell order
         stock: string
@@ -576,7 +560,7 @@ class webull :
             raise Exception('replace_option_order failed', response.status_code, response.reason)
         return True
 
-    def get_bars(self, stock=None, interval='m1', count=1, extendTrading=0) :
+    def get_bars(self, stock=None, interval='m1', count=1, extendTrading=0):
         '''
         get bars returns a pandas dataframe
         params:
@@ -592,7 +576,7 @@ class webull :
             row = row.split(',')
             row = ['0' if value == 'null' else value for value in row]
             data = {'open': float(row[1]), 'high': float(row[3]), 'low': float(row[4]),
-                'close': float(row[2]), 'volume': float(row[6]), 'vwap': float(row[7])}
+                    'close': float(row[2]), 'volume': float(row[6]), 'vwap': float(row[7])}
             df.loc[datetime.fromtimestamp(int(row[0]))] = data
         return df.iloc[::-1]
 
@@ -606,20 +590,127 @@ class webull :
     '''
     get
     '''
-    def get_tradable(self, stock='') :
+    def get_tradable(self, stock=''):
         response = requests.get(urls.is_tradable(self.get_ticker(stock)))
         return response.json()
 
 
-if __name__ == '__main__' :
-    webull = webull()
+class paper_webull(webull):
+    def __init__(self):
+        super().__init__()
+        self.paper_account_id = ''
+
+    def get_account(self):
+        """ Get important details of paper account """
+        headers = self.build_req_headers()
+        response = requests.get(urls.paper_account(self.paper_account_id), headers=headers)
+        return response.json()
+
+    def get_account_id(self):
+        """
+        Get paper account id: call this before paper acct actions
+        """
+        headers = self.build_req_headers()
+
+        response = requests.get(urls.paper_account_id(),
+                                headers=headers)
+        result = response.json()
+        self.paper_account_id = result[0]['id']
+        return True
+
+    def get_current_orders(self):
+        """
+        Open paper trading orders
+        """
+        return self.get_account()['openOrders']
+
+    def get_positions(self):
+        """
+        Current positions in paper trading account.
+        """
+        return self.get_account()['positions']
+
+    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
+        """
+        Place a paper account order.
+        """
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+
+        data = {'action': action, #  BUY or SELL
+                'lmtPrice': float(price),
+                'orderType': orderType, # "LMT","MKT"
+                'outsideRegularTradingHour': True,
+                'quantity': int(quant),
+                'serialId': str(uuid.uuid4()),
+                'tickerId': tId,
+                'timeInForce': enforce} # GTC or DAY
+
+        response = requests.post(urls.paper_place_order(self.paper_account_id, tId), json=data, headers=headers)
+        return response.json()
+
+    def modify_order(self, order, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
+        """
+        Modify a paper account order.
+        """
+        headers = self.build_req_headers()
+
+        data = {'action': action, #  BUY or SELL
+                'lmtPrice': float(price),
+                'orderType':orderType,
+                'comboType': "NORMAL", # "LMT","MKT"
+                'outsideRegularTradingHour': True,
+                'serialId': str(uuid.uuid4()),
+                'tickerId': order['ticker']['tickerId'],
+                'timeInForce': enforce} # GTC or DAY
+
+        if quant == 0 or quant == order['totalQuantity']:
+            data['quantity'] = order['totalQuantity']
+        else:
+            data['quantity'] = int(quant)
+
+        response = requests.post(urls.paper_modify_order(self.paper_account_id, order['orderId']), json=data,
+                                 headers=headers)
+        if response:
+            return True
+        else:
+            print("Modify didn't succeed. {} {}".format(response, response.json()))
+            return False
+
+    def cancel_order(self, order_id):
+        """
+        Cancel a paper account order.
+        """
+        headers = self.build_req_headers()
+        response = requests.post(urls.paper_cancel_order(self.paper_account_id, order_id),
+                                 headers=headers)
+        return bool(response)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Interface with Webull. Paper trading is not the default.")
+    parser.add_argument("-p", "--use-paper", help="Use paper account instead.",
+                        action="store_true")
+    args = parser.parse_args()
+
+    if args.use_paper:
+        webull = paper_webull()
+    else:
+        webull = webull()
+
     webull.login('xxxxxx@xxxx.com', 'xxxxx')
     webull.get_trade_token('xxxxxx')
     # set self.account_id first
     webull.get_account_id()
     # webull.place_order('NKTR', 21.0, 1)
     orders = webull.get_current_orders()
-    for order in orders :
+    for order in orders:
         # print(order)
         webull.cancel_order(order['orderId'])
     # print(webull.get_serial_id())
