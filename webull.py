@@ -4,9 +4,11 @@ import requests
 import uuid
 import hashlib
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pandas import DataFrame, to_datetime
 import collections
+from pytz import timezone
+
 
 import urls
 
@@ -640,12 +642,14 @@ class webull :
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
         response = requests.get(urls.bars(tId), params=params)
-        for row in response.json()[0]['data']:
+        result = response.json()
+        time_zone = timezone(result[0]['timeZone'])
+        for row in result[0]['data']:
             row = row.split(',')
             row = ['0' if value == 'null' else value for value in row]
             data = {'open': float(row[1]), 'high': float(row[3]), 'low': float(row[4]),
                 'close': float(row[2]), 'volume': float(row[6]), 'vwap': float(row[7])}
-            df.loc[datetime.fromtimestamp(int(row[0]))] = data
+            df.loc[datetime.fromtimestamp(int(row[0])).astimezone(time_zone)] = data
         return df.iloc[::-1]
 
 
@@ -653,7 +657,7 @@ class webull :
         """
         There doesn't seem to be a way to get the times the market is open outside of the charts.
         So, best way to tell if the market is open is to pass in a popular stock like AAPL then
-        and see the open and close hours are as would be marked on the chart
+        and see the open and close hours as would be marked on the chart
         and see if the last trade date is the same day as today's date
         :param stock:
         :param tId:
@@ -668,11 +672,35 @@ class webull :
 
         params = {'type': 'm1', 'count': 1, 'extendTrading': 0}
         response = requests.get(urls.bars(tId), params=params)
-        data = response.json()
-        last_trade_date = datetime.fromtimestamp(int(data[0]['data'][0].split(',')[0]))
-        for d in data[0]['dates']:
+        result = response.json()
+        time_zone = timezone(result[0]['timeZone'])
+        last_trade_date = datetime.fromtimestamp(int(result[0]['data'][0].split(',')[0])).astimezone(time_zone)
+        today = datetime.today().astimezone()  #use no time zone to have it pull in local time zone
+
+        if last_trade_date.date() < today.date():
+            # don't know what today's open and close times are, since no trade for today yet
+            return {'market open': None, 'market close': None, 'trading day': False}
+
+        for d in result[0]['dates']:
             if d['type'] == 'T':
-                return {'market open':d['start'],  'market close':d['end'], 'last trade date':last_trade_date}
+                market_open = today.replace(
+                    hour=int(d['start'].split(':')[0]),
+                    minute=int(d['start'].split(':')[1]),
+                    second=0)
+                market_open -= timedelta(microseconds=market_open.microsecond)
+                market_open = market_open.astimezone(time_zone)  #set to market timezone
+
+                market_close = today.replace(
+                    hour=int(d['end'].split(':')[0]),
+                    minute=int(d['end'].split(':')[1]),
+                    second=0)
+                market_close -= timedelta(microseconds=market_close.microsecond)
+                market_close = market_close.astimezone(time_zone) #set to market timezone
+
+                #this implies that we have waited a few minutes from the open before trading
+                return {'market open': market_open ,  'market close':market_close, 'trading day':True}
+        #otherwise
+        return None
 
 
     def get_dividends(self):
