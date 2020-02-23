@@ -650,8 +650,7 @@ class webull:
             row = ['0' if value == 'null' else value for value in row]
             data = {'open': float(row[1]), 'high': float(row[3]), 'low': float(row[4]),
                     'close': float(row[2]), 'volume': float(row[6]), 'vwap': float(row[7])}
-            df.loc[datetime.fromtimestamp(int(row[0]))] = data
-
+            df.loc[datetime.fromtimestamp(int(row[0])).astimezone(time_zone)] = data
         return df.iloc[::-1]
 
     def get_calendar(self,stock=None, tId=None):
