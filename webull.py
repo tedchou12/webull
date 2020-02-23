@@ -9,10 +9,9 @@ from datetime import datetime, timedelta
 from pandas import DataFrame, to_datetime
 import collections
 from pytz import timezone
-from . import endpoints
 
 class webull:
-    def __init__(self):
+    def __init__(self, cmd=False):
         self.session = requests.session()
         self.headers = {
             "Accept": "*/*",
@@ -26,6 +25,12 @@ class webull:
         self.trade_token = ''
         self.uuid = ''
         self.did = '1bc0f666c4614a11808a372f14ffe42c'
+
+        if cmd == True :
+            import endpoints
+        else :
+            from . import endpoints
+
         self.urls = endpoints.urls()
 
     def build_req_headers(self, include_trade_token=False, include_time=False):
@@ -57,13 +62,13 @@ class webull:
         response = requests.post(self.urls.login(), json=data, headers=self.headers)
 
         result = response.json()
-        if result:
+        if 'data' in result and 'accessToken' in result['data'] :
             self.access_token = result['data']['accessToken']
             self.refresh_token = result['data']['refreshToken']
             self.token_expire = result['data']['tokenExpireTime']
             self.uuid = result['data']['uuid']
             return True
-        else:
+        else :
             return False
 
     def login_prompt(self):
@@ -807,11 +812,12 @@ if __name__ == '__main__':
                         action="store_true")
     args = parser.parse_args()
 
-    if args.use_paper:
-        webull = paper_webull()
+    if args.use_paper :
+        webull = paper_webull(cmd=True)
     else:
-        webull = webull()
+        webull = webull(cmd=True)
 
+    # for demo purpose
     webull.login('xxxxxx@xxxx.com', 'xxxxx')
     webull.get_trade_token('xxxxxx')
     # set self.account_id first
