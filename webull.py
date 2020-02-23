@@ -186,6 +186,7 @@ class webull:
         return response.json()
 
     '''
+    Trading related
     authorize trade, must be done before trade action
     '''
     def get_trade_token(self, password=''):
@@ -206,6 +207,254 @@ class webull:
         else:
             return False
 
+    '''
+    lookup ticker_id
+    '''
+    def get_ticker(self, stock=''):
+        response = requests.get(self.urls.stock_id(stock))
+        result = response.json()
+
+        ticker_id = 0
+        if len(result['list']) == 1:
+            for item in result['list']:
+                ticker_id = item['tickerId']
+        return ticker_id
+
+    '''
+    ordering
+    action: BUY / SELL
+    ordertype : LMT / MKT / STP / STP LMT
+    timeinforce:  GTC / DAY / IOC
+    '''
+    def place_order(self, stock='', price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+
+        data = {'action': action,
+                'lmtPrice': float(price),
+                'orderType': orderType,
+                'outsideRegularTradingHour': True,
+                'quantity': int(quant),
+                'serialId': str(uuid.uuid4()),
+                'tickerId': self.get_ticker(stock),
+                'timeInForce': enforce}
+
+        response = requests.post(self.urls.place_orders(self.account_id), json=data, headers=headers)
+        result = response.json()
+
+        return result['success']
+
+    '''
+    OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
+    Submit a buy order, its fill will trigger sell order placement. If one sell fills, it will cancel the other
+     sell
+    '''
+    def place_otoco_order(self, stock='', price='', stop_loss_price='', limit_profit_price='', time_in_force='DAY',
+                          quant=0):
+        headers = self.build_req_headers(include_trade_token=False, include_time=True)
+
+        data1 = {"newOrders": [
+            {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
+             "outsideRegularTradingHour": False, "action": "BUY", "tickerId": self.get_ticker(stock),
+             "lmtPrice": float(price), "comboType": "MASTER"},
+            {"orderType": "STP", "timeInForce": time_in_force, "quantity": int(quant),
+             "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
+             "auxPrice": float(stop_loss_price), "comboType": "STOP_LOSS"},
+            {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
+             "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
+             "lmtPrice": float(limit_profit_price), "comboType": "STOP_PROFIT"}]}
+
+        response1 = requests.post(self.urls.check_otoco_orders(self.account_id),
+                                  json=data1, headers=headers)
+        result1 = response1.json()
+
+        if result1['forward']:
+            data2 = {"newOrders": [
+                {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
+                 "outsideRegularTradingHour": False, "action": "BUY", "tickerId": self.get_ticker(stock),
+                 "lmtPrice": float(price), "comboType": "MASTER", "serialId": str(uuid.uuid4())},
+                {"orderType": "STP", "timeInForce": time_in_force, "quantity": int(quant),
+                 "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
+                 "auxPrice": float(stop_loss_price), "comboType": "STOP_LOSS", "serialId": str(uuid.uuid4())},
+                {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
+                 "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
+                 "lmtPrice": float(limit_profit_price), "comboType": "STOP_PROFIT", "serialId": str(uuid.uuid4())}],
+                "serialId": str(uuid.uuid4())}
+
+            response2 = requests.post(self.urls.place_otoco_orders(self.account_id), json=data2, headers=headers)
+
+            print("Resp 2: {}".format(response2))
+            return True
+        else:
+            print(result1['checkResultList'][0]['code'])
+            print(result1['checkResultList'][0]['msg'])
+            return False
+
+    '''
+    retract an order
+    '''
+    def cancel_order(self, order_id=''):
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+
+        data = {}
+
+        response = requests.post(self.urls.cancel_order(self.account_id) + str(order_id) + '/' + str(uuid.uuid4()), json=data, headers=headers)
+        result = response.json()
+
+        return result['success']
+
+    def cancel_otoco_order(self, order_id=''):
+        '''
+        Retract an otoco order. Cancelling the MASTER order_id cancels the sub orders.
+        '''
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+
+        data = { "serialId": str(uuid.uuid4()), "cancelOrders": [str(order_id)]}
+
+        response = requests.post(self.urls.cancel_otoco_orders(self.account_id),
+                                 json=data, headers=headers)
+        return response.json()
+
+    '''
+    get price quote
+    '''
+    def get_quote(self, stock=None, tId=None) :
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
+        response = requests.get(self.urls.quotes(tId))
+        result = response.json()
+
+        return result
+
+    def get_option_quote(self, stock=None, optionId=None):
+        '''
+        get option quote
+        '''
+        headers = self.build_req_headers()
+        stock = self.get_ticker(stock)
+        params = {'tickerId': int(stock), 'derivativeIds': int(optionId)}
+        return requests.get(self.urls.option_quotes(), params=params, headers=headers).json()
+
+    def get_options_expiration_dates(self, stock=None, count=-1):
+        '''
+        returns a list of options expiration dates
+        '''
+        data = {'count': count}
+        return requests.get(self.urls.options_exp_date(self.get_ticker(stock)), params=data).json()['expireDateList']
+
+    def get_options(self, stock=None, count=-1, includeWeekly=1, direction='all', expireDate=None, queryAll=0):
+        '''
+        get options and returns a dict of options contracts
+        params:
+            stock: symbol
+            count: -1
+            includeWeekly: 0 or 1
+            direction: all, calls, puts
+            expireDate: contract expire date
+            queryAll: 0
+        '''
+        # get next closet expiredate if none is provided
+        if not expireDate:
+            dates = self.get_options_expiration_dates(stock)[0]['date']
+            # ensure we don't provide an option that has < 1 day to expire
+            for d in dates:
+                if d['days'] > 0:
+                    expireDate = d['date']
+                    break
+
+        params = {'count': count, 'includeWeekly': includeWeekly, 'direction': direction,
+                'expireDate': expireDate, 'unSymbol': stock, 'queryAll': queryAll}
+        return requests.get(self.urls.options(self.get_ticker(stock)), params=params).json()['data']
+
+    def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all'):
+        """
+        get a list of options contracts by expire date and strike price
+        strike: string
+        """
+        opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
+        return [c for c in opts if c['strikePrice'] == strike]
+
+    def place_option_order(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0):
+        """
+        create buy / sell order
+        stock: string
+        lmtPrice: float
+        stpPrice: float
+        action: string BUY / SELL
+        optionId: string
+        orderType: LMT / STP / STP LMT
+        enforce: DAY
+        quant: int
+        """
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+
+        data = {
+            'orderType': orderType,
+            'serialId': str(uuid.uuid4()),
+            'timeInForce': enforce,
+            'orders': [{'quantity': quant, 'action': action, 'tickerId': optionId, 'tickerType': 'OPTION'}],
+        }
+
+        if orderType == 'LMT' and lmtPrice:
+            data['lmtPrice'] = float(lmtPrice)
+        if orderType == 'STP' and stpPrice:
+            data['auxPrice'] = float(stpPrice)
+        if orderType == 'STP LMT' and lmtPrice and stpPrice:
+            data['lmtPrice'] = float(lmtPrice)
+            data['auxPrice'] = float(stpPrice)
+
+        response = requests.post(self.urls.place_option_orders(self.account_id), json=data, headers=headers)
+        if response.status_code != 200:
+            raise Exception('place_option_order failed', response.status_code, response.reason)
+        return True
+
+    def replace_option_order(self, order=None, lmtPrice=None, stpPrice=None, enforce=None, quant=0):
+        '''
+        order: dict from get_current_orders
+        stpPrice: float
+        lmtPrice: float
+        enforce: DAY
+        quant: int
+        '''
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+
+        data = {'comboId': order['comboId'],
+                'orderType': order['orderType'],
+                'timeInForce': enforce if enforce else order['timeInForce'],
+                'serialId': str(uuid.uuid4()),
+                'orders': [{'quantity': quant if int(quant) > 0 else order['totalQuantity'],
+                            'action': order['action'],
+                            'tickerId': order['ticker']['tickerId'],
+                            'tickerType': 'OPTION',
+                            'orderId': order['orderId']}]}
+
+        if order['orderType'] == 'LMT' and (lmtPrice or order['lmtPrice']):
+            data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
+        if order['orderType'] and (stpPrice or order['auxPrice']):
+            data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
+        if order['orderType'] == 'STP LMT' and (stpPrice or order['auxPrice']) and (lmtPrice or order['lmtPrice']):
+            data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
+            data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
+
+        response = requests.post(self.urls.replace_option_orders(self.account_id), json=data, headers=headers)
+        if response.status_code != 200:
+            raise Exception('replace_option_order failed', response.status_code, response.reason)
+        return True
+
+    '''
+    get if stock is tradable
+    '''
+    def get_tradable(self, stock=''):
+        response = requests.get(self.urls.is_tradable(self.get_ticker(stock)))
+        return response.json()
+
+    '''
+    Miscellaneous related
+    '''
     def alerts_list(self):
         '''
         Get alerts
@@ -353,138 +602,6 @@ class webull:
         result = response.json()
         return result
 
-    '''
-    lookup ticker_id
-    '''
-    def get_ticker(self, stock=''):
-        response = requests.get(self.urls.stock_id(stock))
-        result = response.json()
-
-        ticker_id = 0
-        if len(result['list']) == 1:
-            for item in result['list']:
-                ticker_id = item['tickerId']
-        return ticker_id
-
-    '''
-    ordering
-    action: BUY / SELL
-    ordertype : LMT / MKT / STP / STP LMT
-    timeinforce:  GTC / DAY / IOC
-    '''
-    def place_order(self, stock='', price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
-        headers = self.build_req_headers(include_trade_token=True, include_time=True)
-
-        data = {'action': action,
-                'lmtPrice': float(price),
-                'orderType': orderType,
-                'outsideRegularTradingHour': True,
-                'quantity': int(quant),
-                'serialId': str(uuid.uuid4()),
-                'tickerId': self.get_ticker(stock),
-                'timeInForce': enforce}
-
-        response = requests.post(self.urls.place_orders(self.account_id), json=data, headers=headers)
-        result = response.json()
-
-        return result['success']
-
-    '''
-    OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
-    Submit a buy order, its fill will trigger sell order placement. If one sell fills, it will cancel the other
-     sell
-    '''
-    def place_otoco_order(self, stock='', price='', stop_loss_price='', limit_profit_price='', time_in_force='DAY',
-                          quant=0):
-        headers = self.build_req_headers(include_trade_token=False, include_time=True)
-
-        data1 = {"newOrders": [
-            {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
-             "outsideRegularTradingHour": False, "action": "BUY", "tickerId": self.get_ticker(stock),
-             "lmtPrice": float(price), "comboType": "MASTER"},
-            {"orderType": "STP", "timeInForce": time_in_force, "quantity": int(quant),
-             "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
-             "auxPrice": float(stop_loss_price), "comboType": "STOP_LOSS"},
-            {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
-             "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
-             "lmtPrice": float(limit_profit_price), "comboType": "STOP_PROFIT"}]}
-
-        response1 = requests.post(self.urls.check_otoco_orders(self.account_id),
-                                  json=data1, headers=headers)
-        result1 = response1.json()
-
-        if result1['forward']:
-            data2 = {"newOrders": [
-                {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
-                 "outsideRegularTradingHour": False, "action": "BUY", "tickerId": self.get_ticker(stock),
-                 "lmtPrice": float(price), "comboType": "MASTER", "serialId": str(uuid.uuid4())},
-                {"orderType": "STP", "timeInForce": time_in_force, "quantity": int(quant),
-                 "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
-                 "auxPrice": float(stop_loss_price), "comboType": "STOP_LOSS", "serialId": str(uuid.uuid4())},
-                {"orderType": "LMT", "timeInForce": time_in_force, "quantity": int(quant),
-                 "outsideRegularTradingHour": False, "action": "SELL", "tickerId": self.get_ticker(stock),
-                 "lmtPrice": float(limit_profit_price), "comboType": "STOP_PROFIT", "serialId": str(uuid.uuid4())}],
-                "serialId": str(uuid.uuid4())}
-
-            response2 = requests.post(self.urls.place_otoco_orders(self.account_id), json=data2, headers=headers)
-
-            print("Resp 2: {}".format(response2))
-            return True
-        else:
-            print(result1['checkResultList'][0]['code'])
-            print(result1['checkResultList'][0]['msg'])
-            return False
-
-    '''
-    retract an order
-    '''
-    def cancel_order(self, order_id=''):
-        headers = self.build_req_headers(include_trade_token=True, include_time=True)
-
-        data = {}
-
-        response = requests.post(self.urls.cancel_order(self.account_id) + str(order_id) + '/' + str(uuid.uuid4()), json=data, headers=headers)
-        result = response.json()
-
-        return result['success']
-
-    def cancel_otoco_order(self, order_id=''):
-        '''
-        Retract an otoco order. Cancelling the MASTER order_id cancels the sub orders.
-        '''
-        headers = self.build_req_headers(include_trade_token=True, include_time=True)
-
-        data = { "serialId": str(uuid.uuid4()), "cancelOrders": [str(order_id)]}
-
-        response = requests.post(self.urls.cancel_otoco_orders(self.account_id),
-                                 json=data, headers=headers)
-        return response.json()
-
-    '''
-    get price quote
-    '''
-    def get_quote(self, stock=None, tId=None) :
-        if not tId is None:
-            pass
-        elif not stock is None:
-            tId = self.get_ticker(stock)
-        else:
-            raise ValueError('Must provide a stock symbol or a stock id')
-
-        response = requests.get(self.urls.quotes(tId))
-        result = response.json()
-
-        return result
-
-    def get_option_quote(self, stock=None, optionId=None):
-        '''
-        get option quote
-        '''
-        headers = self.build_req_headers()
-        stock = self.get_ticker(stock)
-        params = {'tickerId': int(stock), 'derivativeIds': int(optionId)}
-        return requests.get(self.urls.option_quotes(), params=params, headers=headers).json()
-
     def get_analysis(self, stock=None):
         '''
         get analysis info and returns a dict of analysis ratings
@@ -506,112 +623,6 @@ class webull:
         '''
         params = {'currentNewsId': Id, 'pageSize': items}
         return requests.get(self.urls.news(self.get_ticker(stock)), params=params).json()
-
-    def get_options_expiration_dates(self, stock=None, count=-1):
-        '''
-        returns a list of options expiration dates
-        '''
-        data = {'count': count}
-        return requests.get(self.urls.options_exp_date(self.get_ticker(stock)), params=data).json()['expireDateList']
-
-    def get_options(self, stock=None, count=-1, includeWeekly=1, direction='all', expireDate=None, queryAll=0):
-        '''
-        get options and returns a dict of options contracts
-        params:
-            stock: symbol
-            count: -1
-            includeWeekly: 0 or 1
-            direction: all, calls, puts
-            expireDate: contract expire date
-            queryAll: 0
-        '''
-        # get next closet expiredate if none is provided
-        if not expireDate:
-            dates = self.get_options_expiration_dates(stock)[0]['date']
-            # ensure we don't provide an option that has < 1 day to expire
-            for d in dates:
-                if d['days'] > 0:
-                    expireDate = d['date']
-                    break
-
-        params = {'count': count, 'includeWeekly': includeWeekly, 'direction': direction,
-                'expireDate': expireDate, 'unSymbol': stock, 'queryAll': queryAll}
-        return requests.get(self.urls.options(self.get_ticker(stock)), params=params).json()['data']
-
-    def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all'):
-        """
-        get a list of options contracts by expire date and strike price
-        strike: string
-        """
-        opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
-        return [c for c in opts if c['strikePrice'] == strike]
-
-    def place_option_order(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0):
-        """
-        create buy / sell order
-        stock: string
-        lmtPrice: float
-        stpPrice: float
-        action: string BUY / SELL
-        optionId: string
-        orderType: LMT / STP / STP LMT
-        enforce: DAY
-        quant: int
-        """
-        headers = self.build_req_headers(include_trade_token=True, include_time=True)
-
-        data = {
-            'orderType': orderType,
-            'serialId': str(uuid.uuid4()),
-            'timeInForce': enforce,
-            'orders': [{'quantity': quant, 'action': action, 'tickerId': optionId, 'tickerType': 'OPTION'}],
-        }
-
-        if orderType == 'LMT' and lmtPrice:
-            data['lmtPrice'] = float(lmtPrice)
-        if orderType == 'STP' and stpPrice:
-            data['auxPrice'] = float(stpPrice)
-        if orderType == 'STP LMT' and lmtPrice and stpPrice:
-            data['lmtPrice'] = float(lmtPrice)
-            data['auxPrice'] = float(stpPrice)
-
-        response = requests.post(self.urls.place_option_orders(self.account_id), json=data, headers=headers)
-        if response.status_code != 200:
-            raise Exception('place_option_order failed', response.status_code, response.reason)
-        return True
-
-    def replace_option_order(self, order=None, lmtPrice=None, stpPrice=None, enforce=None, quant=0):
-        '''
-        order: dict from get_current_orders
-        stpPrice: float
-        lmtPrice: float
-        enforce: DAY
-        quant: int
-        '''
-        headers = self.build_req_headers(include_trade_token=True, include_time=True)
-
-        data = {'comboId': order['comboId'],
-                'orderType': order['orderType'],
-                'timeInForce': enforce if enforce else order['timeInForce'],
-                'serialId': str(uuid.uuid4()),
-                'orders': [{'quantity': quant if int(quant) > 0 else order['totalQuantity'],
-                            'action': order['action'],
-                            'tickerId': order['ticker']['tickerId'],
-                            'tickerType': 'OPTION',
-                            'orderId': order['orderId']}]}
-
-        if order['orderType'] == 'LMT' and (lmtPrice or order['lmtPrice']):
-            data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
-        if order['orderType'] and (stpPrice or order['auxPrice']):
-            data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
-        if order['orderType'] == 'STP LMT' and (stpPrice or order['auxPrice']) and (lmtPrice or order['lmtPrice']):
-            data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
-            data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
-
-        response = requests.post(self.urls.replace_option_orders(self.account_id), json=data, headers=headers)
-        if response.status_code != 200:
-            raise Exception('replace_option_order failed', response.status_code, response.reason)
-        return True
 
     def get_bars(self, stock=None, tId = None, interval='m1', count=1, extendTrading=0) :
         '''
@@ -642,7 +653,6 @@ class webull:
             df.loc[datetime.fromtimestamp(int(row[0]))] = data
 
         return df.iloc[::-1]
-
 
     def get_calendar(self,stock=None, tId=None):
         """
@@ -693,7 +703,6 @@ class webull:
         #otherwise
         return None
 
-
     def get_dividends(self):
         """ Return account's dividend info """
         headers = self.build_req_headers()
@@ -701,13 +710,9 @@ class webull:
         response = requests.post(self.urls.dividends(self.account_id), json=data, headers=headers)
         return response.json()
 
-    '''
-    get if stock is tradable
-    '''
-    def get_tradable(self, stock=''):
-        response = requests.get(self.urls.is_tradable(self.get_ticker(stock)))
-        return response.json()
-
+'''
+Paper support
+'''
 class paper_webull(webull):
     def __init__(self):
         super().__init__()
