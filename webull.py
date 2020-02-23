@@ -714,16 +714,9 @@ class webull:
 Paper support
 '''
 class paper_webull(webull):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cmd=False):
+        super().__init__(cmd)
         self.paper_account_id = ''
-        
-        if cmd == True :
-            import endpoints
-        else :
-            from . import endpoints
-
-        self.urls = endpoints.urls()
 
     def get_account(self):
         """ Get important details of paper account """
