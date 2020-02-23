@@ -5,8 +5,11 @@ import requests
 import uuid
 import hashlib
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pandas import DataFrame, to_datetime
+import collections
+from pytz import timezone
+
 
 import urls
 
@@ -311,6 +314,43 @@ class webull:
         return result
 
     '''
+    Run a screener  
+    '''
+    def run_screener(self, region=None, price_lte=None, price_gte=None, pct_chg_gte=None, pct_chg_lte=None, sort=None,
+                     sort_dir=None):
+        """
+        Notice the fact that endpoints are reversed on lte and gte, but this function makes it work correctly
+        Also screeners are not sent by name, just the parameters are sent
+        example: run_screener( price_lte=.10, price_gte=5, pct_chg_lte=.035, pct_chg_gte=.51)
+        just a start, add more as you need it
+        """
+
+        jdict = collections.defaultdict(str)
+        jdict["fetch"] = 200
+        jdict["rules"] = collections.defaultdict(str)
+        jdict["sort"] = collections.defaultdict(str)
+        jdict["attach"] = {"hkexPrivilege": "true"}  #unknown meaning, was in network trace
+
+        jdict["rules"]["wlas.screener.rule.region"] = "securities.region.name.6"
+        if not price_lte is None and not price_gte is None:
+            # lte and gte are backwards
+            jdict["rules"]["wlas.screener.rule.price"] = "gte=" + str(price_lte) + "&lte=" + str(price_gte)
+
+        if not pct_chg_lte is None and not pct_chg_gte is None:
+            # lte and gte are backwards
+            jdict["rules"]["wlas.screener.rule.changeRatio"] = "gte=" + str(pct_chg_lte) + "&lte=" + str(pct_chg_gte)
+
+        if sort is None:
+            jdict["sort"]["rule"] = "wlas.screener.rule.price"
+        if sort_dir is None:
+            jdict["sort"]["desc"] = "true"
+
+        # jdict = self._ddict2dict(jdict)
+        response = requests.post(urls.screener(), json=jdict)
+        result = response.json()
+        return result
+
+    '''
     lookup ticker_id
     '''
     def get_ticker(self, stock=''):
@@ -417,8 +457,15 @@ class webull:
     '''
     get price quote
     '''
-    def get_quote(self, stock=''):
-        response = requests.get(urls.quotes(self.get_ticker(stock)))
+    def get_quote(self, stock=None, tId=None) :
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
+        response = requests.get(urls.quotes(tId))
         result = response.json()
 
         return result
@@ -560,7 +607,7 @@ class webull:
             raise Exception('replace_option_order failed', response.status_code, response.reason)
         return True
 
-    def get_bars(self, stock=None, interval='m1', count=1, extendTrading=0):
+    def get_bars(self, stock=None, tId = None, interval='m1', count=1, extendTrading=0) :
         '''
         get bars returns a pandas dataframe
         params:
@@ -568,17 +615,78 @@ class webull:
             count: number of bars to return
             extendTrading: change to 1 for pre-market and afterhours bars
         '''
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
         params = {'type': interval, 'count': count, 'extendTrading': extendTrading}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
-        response = requests.get(urls.bars(self.get_ticker(stock)), params=params)
-        for row in response.json()[0]['data']:
+        response = requests.get(urls.bars(tId), params=params)
+        result = response.json()
+        time_zone = timezone(result[0]['timeZone'])
+        for row in result[0]['data']:
             row = row.split(',')
             row = ['0' if value == 'null' else value for value in row]
             data = {'open': float(row[1]), 'high': float(row[3]), 'low': float(row[4]),
                     'close': float(row[2]), 'volume': float(row[6]), 'vwap': float(row[7])}
             df.loc[datetime.fromtimestamp(int(row[0]))] = data
+
         return df.iloc[::-1]
+
+
+    def get_calendar(self,stock=None, tId=None):
+        """
+        There doesn't seem to be a way to get the times the market is open outside of the charts.
+        So, best way to tell if the market is open is to pass in a popular stock like AAPL then
+        and see the open and close hours as would be marked on the chart
+        and see if the last trade date is the same day as today's date
+        :param stock:
+        :param tId:
+        :return: dict of 'market open', 'market close', 'last trade date'
+        """
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
+        params = {'type': 'm1', 'count': 1, 'extendTrading': 0}
+        response = requests.get(urls.bars(tId), params=params)
+        result = response.json()
+        time_zone = timezone(result[0]['timeZone'])
+        last_trade_date = datetime.fromtimestamp(int(result[0]['data'][0].split(',')[0])).astimezone(time_zone)
+        today = datetime.today().astimezone()  #use no time zone to have it pull in local time zone
+
+        if last_trade_date.date() < today.date():
+            # don't know what today's open and close times are, since no trade for today yet
+            return {'market open': None, 'market close': None, 'trading day': False}
+
+        for d in result[0]['dates']:
+            if d['type'] == 'T':
+                market_open = today.replace(
+                    hour=int(d['start'].split(':')[0]),
+                    minute=int(d['start'].split(':')[1]),
+                    second=0)
+                market_open -= timedelta(microseconds=market_open.microsecond)
+                market_open = market_open.astimezone(time_zone)  #set to market timezone
+
+                market_close = today.replace(
+                    hour=int(d['end'].split(':')[0]),
+                    minute=int(d['end'].split(':')[1]),
+                    second=0)
+                market_close -= timedelta(microseconds=market_close.microsecond)
+                market_close = market_close.astimezone(time_zone) #set to market timezone
+
+                #this implies that we have waited a few minutes from the open before trading
+                return {'market open': market_open ,  'market close':market_close, 'trading day':True}
+        #otherwise
+        return None
+
 
     def get_dividends(self):
         """ Return account's dividend info """
@@ -715,3 +823,5 @@ if __name__ == '__main__':
         webull.cancel_order(order['orderId'])
     # print(webull.get_serial_id())
     # print(webull.get_ticker('BABA'))
+
+

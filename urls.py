@@ -118,3 +118,6 @@ def trade_token():
 
 def user():
     return f'{base_user_url}/user'
+
+def screener():
+    return f'{base_userbroker_url}/wlas/screener/ng/query'
