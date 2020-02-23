@@ -717,6 +717,13 @@ class paper_webull(webull):
     def __init__(self):
         super().__init__()
         self.paper_account_id = ''
+        
+        if cmd == True :
+            import endpoints
+        else :
+            from . import endpoints
+
+        self.urls = endpoints.urls()
 
     def get_account(self):
         """ Get important details of paper account """
@@ -809,7 +816,6 @@ class paper_webull(webull):
         response = requests.post(self.urls.paper_cancel_order(self.paper_account_id, order_id),
                                  headers=headers)
         return bool(response)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Interface with Webull. Paper trading is not the default.")
