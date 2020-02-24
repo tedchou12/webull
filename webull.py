@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 from pandas import DataFrame, to_datetime
 import collections
 from pytz import timezone
+import pickle
+import os
 
 class webull:
     def __init__(self, cmd=False):
@@ -24,7 +26,7 @@ class webull:
         self.refresh_token = ''
         self.trade_token = ''
         self.uuid = ''
-        self.did = '1bc0f666c4614a11808a372f14ffe42c'
+        self.did = self._get_did()
 
         if cmd == True :
             import endpoints
@@ -32,6 +34,23 @@ class webull:
             from . import endpoints
 
         self.urls = endpoints.urls()
+
+    def _get_did(self):
+        """
+        Makes a unique device id from a random uuid (uuid.uuid4).
+        if the pickle file doesn't exist, this func will generate a random 32 character hex string
+        uuid and save it in a pickle file for future use. if the file already exists it will
+        load the pickle file to reuse the did. Having a unique did appears to be very important
+        for the MQTT web socket protocol
+        :return: hex string of a 32 digit uuid
+        """
+        if os.path.exists('did.bin'):
+            did = pickle.load(open('did.bin','rb'))
+        else:
+            did = uuid.uuid4().hex
+            pickle.dump(did, open('did.bin', 'wb'))
+        return did
+
 
     def build_req_headers(self, include_trade_token=False, include_time=False):
         '''
