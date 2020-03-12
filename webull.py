@@ -916,7 +916,7 @@ class StreamConn():
             except Exception as e:
                 print(e)
                 time.sleep(2) #so theres time for message to print
-                os.exit(6)
+                os._exit(6)
 
             self.onmsg_lock.release()
 
