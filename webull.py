@@ -866,10 +866,10 @@ class StreamConn():
                 T: deal:{trdBs, volume, tradeTime(H:M:S), price}
     topic 104:  F/T/A: askList:[{price, volume}], bidList:[{price, volume}]
     topic 105:  Seems to be 102 and 103
-    topic 106:  Seems to be 102 
-    topic 107:  Seems to be 104
-    topic 108:  T: depth:{ntvAggAskList:[{price:, volume}], ntvAggBidList:[{price:,volume:}]}}
-4    """
+    topic 106:  Seems to be 102 (and 103 sometimes depending on symbol/exchange) 
+    topic 107:  Seems to be 103 and 104 
+    topic 108:  Seems to be 103 and 104 and T: depth:{ntvAggAskList:[{price:, volume}], ntvAggBidList:[{price:,volume:}]}}
+    """
 
     def _setup_callbacks(self):
         """
