@@ -1052,10 +1052,17 @@ if __name__ == '__main__':
     # print(webull.get_ticker('BABA'))
 
     #test streaming
+    nyc = timezone('America/New_York')
     def on_price_message(topic, data):
         print (data)
-        print(f"Ticker: {topic['tickerId']}, Price: {data['deal']['price']}, "
-            + f"Volume: {data['deal']['volume']}, Trade time: {data['tradeTime']}")
+        print(f"Ticker: {topic['tickerId']}, Price: {data['deal']['price']}, Volume: {data['deal']['volume']}", end='', sep='')
+        if 'tradeTime' in data:
+            print(', tradeTime: ', data['tradeTime'])
+        else:
+            tradetime = data['deal']['tradeTime']
+            current_dt = datetime.today().astimezone(nyc)
+            ts = current_dt.replace(hour=int(tradetime[:2]), minute=int(tradetime[3:5]), second=0, microsecond=0)
+            print(', tradeTime: ', ts)
 
     def on_order_message(topic, data):
         print(data)
