@@ -261,9 +261,11 @@ class webull:
                 'timeInForce': enforce}
 
         response = requests.post(self.urls.place_orders(self.account_id), json=data, headers=headers)
-        result = response.json()
+        #result = response.json()
+        #return result['success']
+        return response.json()
 
-        return result['success']
+
 
     '''
     OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
@@ -832,7 +834,7 @@ class paper_webull(webull):
         return bool(response)
 
 
-class StreamConn():
+class StreamConn:
     def __init__(self, debug_flg=False):
         self.onsub_lock = threading.RLock()
         self.oncon_lock = threading.RLock()
