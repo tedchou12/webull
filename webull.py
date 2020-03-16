@@ -248,7 +248,14 @@ class webull:
     ordertype : LMT / MKT / STP / STP LMT
     timeinforce:  GTC / DAY / IOC
     '''
-    def place_order(self, stock='', price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
+    def place_order(self, stock=None,  tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
         data = {'action': action,
@@ -257,7 +264,7 @@ class webull:
                 'outsideRegularTradingHour': True,
                 'quantity': int(quant),
                 'serialId': str(uuid.uuid4()),
-                'tickerId': self.get_ticker(stock),
+                'tickerId': tId,
                 'timeInForce': enforce}
 
         response = requests.post(self.urls.place_orders(self.account_id), json=data, headers=headers)
@@ -674,7 +681,8 @@ class webull:
             row = ['0' if value == 'null' else value for value in row]
             data = {'open': float(row[1]), 'high': float(row[3]), 'low': float(row[4]),
                     'close': float(row[2]), 'volume': float(row[6]), 'vwap': float(row[7])}
-            df.loc[datetime.fromtimestamp(int(row[0])).astimezone(time_zone)] = data
+            #convert to a panda datetime64 which has extra features like floor and resample
+            df.loc[to_datetime(datetime.fromtimestamp(int(row[0])).astimezone(time_zone))] = data
         return df.iloc[::-1]
 
     def get_calendar(self,stock=None, tId=None):
