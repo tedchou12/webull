@@ -92,7 +92,7 @@ class urls :
         return f'{self.base_paper_url}/paper/1/acc/{paper_account_id}/orderop/place/{stock}'
 
     def place_option_orders(self, account_id):
-        return f'{self.base_trade_url}/v2/option/checkOrder/{account_id}'
+        return f'{self.base_trade_url}/v2/option/placeOrder/{account_id}'
 
     def place_orders(self, account_id):
         return f'{self.base_trade_url}/order/{account_id}/placeStockOrder'
