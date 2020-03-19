@@ -46,6 +46,14 @@ for order in orders :
     webull.cancel_order(order['orderId'])
 ```
 
+## How to use Streaming Quotes
+The streaming quotes utilize the mqtt "internet of things" format over tls 1.2 encrypted binary websockets, you must install paho-mqtt >=1.5 from pypi to get this working.
+
+Warning::  most messages sent with price data like topic 102 are sketchy at best and seem to change what they are sending, based on ticker, exchange, or if its afterhours; for ex. AAPL will send price & volume in same message 2 or 3 times a second, while a penny biotech will not send any pricing data via this topic; topic 105 is the default, due to this issue. if your getting too much data, change to topic 102 to get more aggragated pricing data and see what ya get
+
+# Stream Quotes
+https://github.com/tedchou12/webull/wiki/How-to-use-Streaming-Quotes%3F
+
 # Disclaimer
 This software is not extensively tested, please use at your own risk.
 
