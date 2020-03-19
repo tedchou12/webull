@@ -201,9 +201,9 @@ class webull:
     Historical orders, can be cancelled or filled
     status = Cancelled / Filled / Working / Partially Filled / Pending / Failed / All
     '''
-    def get_history_orders(self, status='Cancelled'):
+    def get_history_orders(self, status='Cancelled', count=20):
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
-        response = requests.get(self.urls.orders(self.account_id) + str(status), headers=headers)
+        response = requests.get(self.urls.orders(self.account_id, count) + str(status), headers=headers)
 
         return response.json()
 
@@ -772,6 +772,12 @@ class paper_webull(webull):
         Open paper trading orders
         """
         return self.get_account()['openOrders']
+
+    def get_history_orders(self, status='Cancelled', count=20):
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+        response = requests.get(self.urls.paper_orders(self.paper_account_id, count) + str(status), headers=headers)
+
+        return response.json()
 
     def get_positions(self):
         """
