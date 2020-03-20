@@ -1,4 +1,6 @@
 __pycache__/
 .DS_Store
 env/
+.gitignore
+did.bin
 .vscode
