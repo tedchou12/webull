@@ -264,6 +264,10 @@ class webull:
                 'tickerId': tId,
                 'timeInForce': enforce}
 
+        #Market orders do not support extended hours trading.
+        if orderType == 'MKT':
+            data['outsideRegularTradingHour'] = False
+
         response = requests.post(self.urls.place_orders(self.account_id), json=data, headers=headers)
         #result = response.json()
         #return result['success']
@@ -597,7 +601,7 @@ class webull:
     Run a screener
     '''
     def run_screener(self, region=None, price_lte=None, price_gte=None, pct_chg_gte=None, pct_chg_lte=None, sort=None,
-                     sort_dir=None):
+                     sort_dir=None, vol_lte=None, vol_gte=None):
         """
         Notice the fact that endpoints are reversed on lte and gte, but this function makes it work correctly
         Also screeners are not sent by name, just the parameters are sent
@@ -615,6 +619,10 @@ class webull:
         if not price_lte is None and not price_gte is None:
             # lte and gte are backwards
             jdict["rules"]["wlas.screener.rule.price"] = "gte=" + str(price_lte) + "&lte=" + str(price_gte)
+
+        if not vol_lte is None and not vol_gte is None:
+            # lte and gte are backwards
+            jdict["rules"]["wlas.screener.rule.volume"] = "gte=" + str(vol_lte) + "&lte=" + str(vol_gte)
 
         if not pct_chg_lte is None and not pct_chg_gte is None:
             # lte and gte are backwards
@@ -803,6 +811,10 @@ class paper_webull(webull):
                 'serialId': str(uuid.uuid4()),
                 'tickerId': tId,
                 'timeInForce': enforce} # GTC or DAY
+
+        #Market orders do not support extended hours trading.
+        if orderType == 'MKT':
+            data['outsideRegularTradingHour'] = False
 
         response = requests.post(self.urls.paper_place_order(self.paper_account_id, tId), json=data, headers=headers)
         return response.json()
