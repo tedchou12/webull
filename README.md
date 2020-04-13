@@ -7,7 +7,8 @@ How to use this package.
 
 How to login and get account details
 ```
-webull = webull()
+import webull
+webull = webull.webull()
 webull.login('test@test.com', 'pa$$w0rd')
 webull.get_account_id()
 webull.get_trade_token('123456')
@@ -16,7 +17,8 @@ print(webull.get_account())
 
 How to order stock
 ```
-webull = webull()
+import webull
+webull = webull.webull()
 webull.login('test@test.com', 'pa$$w0rd')
 webull.get_account_id()
 webull.get_trade_token('123456')
@@ -25,7 +27,8 @@ webull.place_order('NDAQ', 90.0, 2) //stock_ticker_symbol, price, quantity
 
 How to check standing orders
 ```
-webull = webull()
+import webull
+webull = webull.webull()
 webull.login('test@test.com', 'pa$$w0rd')
 webull.get_account_id()
 webull.get_trade_token('123456')
@@ -36,7 +39,8 @@ for order in orders :
 
 How to cancel standing orders
 ```
-webull = webull()
+import webull
+webull = webull.webull()
 webull.login('test@test.com', 'pa$$w0rd')
 webull.get_account_id()
 webull.get_trade_token('123456')
