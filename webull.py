@@ -244,8 +244,9 @@ class webull:
     action: BUY / SELL
     ordertype : LMT / MKT / STP / STP LMT
     timeinforce:  GTC / DAY / IOC
+    outsideRegularTradingHour: True / False
     '''
-    def place_order(self, stock=None,  tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
+    def place_order(self, stock=None,  tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True):
         if not tId is None:
             pass
         elif not stock is None:
@@ -258,7 +259,7 @@ class webull:
         data = {'action': action,
                 'lmtPrice': float(price),
                 'orderType': orderType,
-                'outsideRegularTradingHour': True,
+                'outsideRegularTradingHour': outsideRegularTradingHour,
                 'quantity': int(quant),
                 'serialId': str(uuid.uuid4()),
                 'tickerId': tId,
