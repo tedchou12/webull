@@ -100,6 +100,9 @@ class urls :
     def place_orders(self, account_id):
         return f'{self.base_trade_url}/order/{account_id}/placeStockOrder'
 
+    def modify_order(self, account_id, order_id):
+        return f'{self.base_trade_url}/order/{account_id}/modifyStockOrder/{order_id}'
+
     def place_otoco_orders(self, account_id):
         return f'{self.base_trade_url}/v2/corder/stock/place/{account_id}'
 

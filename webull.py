@@ -246,7 +246,7 @@ class webull:
     timeinforce:  GTC / DAY / IOC
     outsideRegularTradingHour: True / False
     '''
-    def place_order(self, stock=None,  tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True):
+    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True):
         if not tId is None:
             pass
         elif not stock is None:
@@ -274,7 +274,42 @@ class webull:
         #return result['success']
         return response.json()
 
+    '''
+    modify an order
+    action: BUY / SELL
+    ordertype : LMT / MKT / STP / STP LMT
+    timeinforce:  GTC / DAY / IOC
+    outsideRegularTradingHour: True / False
+    '''
+    def modify_order(self, order=None, price=0, action=None, orderType=None, enforce=None, quant=0, outsideRegularTradingHour=None):
+        if not order:
+            raise ValueError('Must provide an order')
 
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+        
+        modifiedAction = action or order['action']
+        modifiedLmtPrice = float(price or order['lmtPrice'])
+        modifiedOrderType = orderType or order['orderType']
+        modifiedOutsideRegularTradingHour = outsideRegularTradingHour if type(outsideRegularTradingHour) == bool else order['outsideRegularTradingHour']
+        modifiedEnforce = enforce or order['timeInForce']
+        modifiedQuant = int(quant or order['quantity'])
+
+        data = {'action': modifiedAction, 
+                'lmtPrice': modifiedLmtPrice,
+                'orderType': modifiedOrderType,
+                'quantity': modifiedQuant,
+                'comboType': "NORMAL", 
+                'outsideRegularTradingHour': modifiedOutsideRegularTradingHour,
+                'serialId': str(uuid.uuid4()),
+                'tickerId': order['ticker']['tickerId'],
+                'timeInForce': modifiedEnforce} 
+        #Market orders do not support extended hours trading.
+        if data['orderType'] == 'MKT':
+            data['outsideRegularTradingHour'] = False
+
+        response = requests.put(self.urls.modify_order(self.account_id, order['orderId']), json=data, headers=headers)
+
+        return response.json()
 
     '''
     OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
