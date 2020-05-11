@@ -1,19 +1,25 @@
 import argparse
+import collections
 import getpass
+import hashlib
 import json
 import requests
 import uuid
-import hashlib
-import time
-from datetime import datetime, timedelta
-from pandas import DataFrame, to_datetime
-import collections
-from pytz import timezone
-import pickle
 import os
+import pickle
+import time
+
+from datetime import datetime, timedelta
+from email_validator import validate_email, EmailNotValidError
+from pandas import DataFrame, to_datetime
+from pytz import timezone
+
+from . import endpoints
+
 
 class webull:
-    def __init__(self, cmd=False):
+
+    def __init__(self):
         self.session = requests.session()
         self.headers = {
             "Accept": "*/*",
@@ -27,12 +33,6 @@ class webull:
         self.trade_token = ''
         self.uuid = ''
         self.did = self._get_did()
-
-        if cmd == True :
-            import endpoints
-        else :
-            from . import endpoints
-
         self.urls = endpoints.urls()
 
     def _get_did(self):
@@ -44,11 +44,12 @@ class webull:
         for the MQTT web socket protocol
         :return: hex string of a 32 digit uuid
         """
-        if os.path.exists('did.bin'):
-            did = pickle.load(open('did.bin','rb'))
+        filename = 'did.bin'
+        if os.path.exists(filename):
+            did = pickle.load(open(filename,'rb'))
         else:
             did = uuid.uuid4().hex
-            pickle.dump(did, open('did.bin', 'wb'))
+            pickle.dump(did, open(filename, 'wb'))
         return did
 
 
@@ -65,27 +66,42 @@ class webull:
             headers['t_time'] = str(round(time.time() * 1000))
         return headers
 
-    '''
-    for login purposes password need to be hashed password, figuring out what hash function is used currently.
-    '''
+
     def login(self, username='', password=''):
+        '''
+        Login with email or phone number
+
+        phone numbers must be a str in the following form
+        US '+1-XXXXXXX'
+        CH '+86-XXXXXXXXXXX'
+        '''
+
         # with webull md5 hash salted
         password = ('wl_app-a&b@!423^' + password).encode('utf-8')
         md5_hash = hashlib.md5(password)
-        # password = md5_hash.hexdigest()
-        data = {'account': username,
-                'accountType': 2,
-                'deviceId': self.did,
-                'pwd': md5_hash.hexdigest(),
-                'regionId': 1}
-        response = requests.post(self.urls.login(), json=data, headers=self.headers)
 
+        try:
+          validate_email(username)
+          accountType = 2 # email
+        except EmailNotValidError as _e:
+          accountType = 1 # phone
+
+        data = {
+            'account': username,
+            'accountType': accountType,
+            'deviceId': self.did,
+            'pwd': md5_hash.hexdigest(),
+        }
+
+        response = requests.post(self.urls.login(), json=data, headers=self.headers)
         result = response.json()
+
         if 'data' in result and 'accessToken' in result['data'] :
             self.access_token = result['data']['accessToken']
             self.refresh_token = result['data']['refreshToken']
             self.token_expire = result['data']['tokenExpireTime']
             self.uuid = result['data']['uuid']
+            self.account_id = self.get_account_id()
             return True
         else :
             return False
@@ -148,19 +164,17 @@ class webull:
 
         response = requests.get(self.urls.account_id(), headers=headers)
         result = response.json()
-
         if result['success']:
-            self.account_id = str(result['data'][0]['secAccountId'])
-            return True
+            id = str(result['data'][0]['secAccountId'])
+            return id
         else:
-            return False
+            return None
 
     '''
     get important details of account, positions, portfolio stance...etc
     '''
     def get_account(self):
         headers = self.build_req_headers()
-
         response = requests.get(self.urls.account(self.account_id), headers=headers)
         result = response.json()
 
@@ -214,12 +228,10 @@ class webull:
         # with webull md5 hash salted
         password = ('wl_app-a&b@!423^' + password).encode('utf-8')
         md5_hash = hashlib.md5(password)
-        # password = md5_hash.hexdigest()
         data = {'pwd': md5_hash.hexdigest()}
 
         response = requests.post(self.urls.trade_token(), json=data, headers=headers)
         result = response.json()
-
         if result['success']:
             self.trade_token = result['data']['tradeToken']
             return True
@@ -286,7 +298,7 @@ class webull:
             raise ValueError('Must provide an order')
 
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
-        
+
         modifiedAction = action or order['action']
         modifiedLmtPrice = float(price or order['lmtPrice'])
         modifiedOrderType = orderType or order['orderType']
@@ -294,15 +306,17 @@ class webull:
         modifiedEnforce = enforce or order['timeInForce']
         modifiedQuant = int(quant or order['quantity'])
 
-        data = {'action': modifiedAction, 
-                'lmtPrice': modifiedLmtPrice,
-                'orderType': modifiedOrderType,
-                'quantity': modifiedQuant,
-                'comboType': "NORMAL", 
-                'outsideRegularTradingHour': modifiedOutsideRegularTradingHour,
-                'serialId': str(uuid.uuid4()),
-                'tickerId': order['ticker']['tickerId'],
-                'timeInForce': modifiedEnforce} 
+        data = {
+            'action': modifiedAction,
+            'lmtPrice': modifiedLmtPrice,
+            'orderType': modifiedOrderType,
+            'quantity': modifiedQuant,
+            'comboType': "NORMAL",
+            'outsideRegularTradingHour': modifiedOutsideRegularTradingHour,
+            'serialId': str(uuid.uuid4()),
+            'tickerId': order['ticker']['tickerId'],
+            'timeInForce': modifiedEnforce
+        }
         #Market orders do not support extended hours trading.
         if data['orderType'] == 'MKT':
             data['outsideRegularTradingHour'] = False
@@ -786,8 +800,9 @@ class webull:
 Paper support
 '''
 class paper_webull(webull):
-    def __init__(self, cmd=False):
-        super().__init__(cmd)
+
+    def __init__(self):
+        super().__init__()
         self.paper_account_id = ''
 
     def get_account(self):
@@ -801,12 +816,10 @@ class paper_webull(webull):
         Get paper account id: call this before paper acct actions
         """
         headers = self.build_req_headers()
-
-        response = requests.get(self.urls.paper_account_id(),
-                                headers=headers)
+        response = requests.get(self.urls.paper_account_id(), headers=headers)
         result = response.json()
-        self.paper_account_id = result[0]['id']
-        return True
+        id = result[0]['id']
+        return id
 
     def get_current_orders(self):
         """
@@ -817,7 +830,6 @@ class paper_webull(webull):
     def get_history_orders(self, status='Cancelled', count=20):
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
         response = requests.get(self.urls.paper_orders(self.paper_account_id, count) + str(status), headers=headers)
-
         return response.json()
 
     def get_positions(self):
@@ -898,20 +910,7 @@ if __name__ == '__main__':
                         action="store_true")
     args = parser.parse_args()
 
-    if args.use_paper :
-        webull = paper_webull(cmd=True)
+    if args.use_paper:
+        wb = paper_webull()
     else:
-        webull = webull(cmd=True)
-
-    # for demo purpose
-    webull.login('xxxxxx@xxxx.com', 'xxxxx')
-    webull.get_trade_token('xxxxxx')
-    # set self.account_id first
-    webull.get_account_id()
-    # webull.place_order('NKTR', 21.0, 1)
-    orders = webull.get_current_orders()
-    for order in orders:
-        # print(order)
-        webull.cancel_order(order['orderId'])
-    # print(webull.get_serial_id())
-    # print(webull.get_ticker('BABA'))
+        wb = webull()

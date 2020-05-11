@@ -8,3 +8,4 @@ pytz==2020.1
 requests==2.23.0
 six==1.14.0
 urllib3==1.25.9
+email-validator==1.1.0
