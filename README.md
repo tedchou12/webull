@@ -13,7 +13,7 @@ pip install webull
 
 How to login and get account details
 ```
-from webull import webull # for paper trading, import 'paper-webull'
+from webull import webull # for paper trading, import 'paper_webull'
 
 wb = webull()
 wb.login('test@test.com', 'pa$$w0rd')
