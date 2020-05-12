@@ -801,12 +801,11 @@ class paper_webull(webull):
 
     def __init__(self):
         super().__init__()
-        self.paper_account_id = ''
 
     def get_account(self):
         """ Get important details of paper account """
         headers = self.build_req_headers()
-        response = requests.get(self._urls.paper_account(self.paper_account_id), headers=headers)
+        response = requests.get(self._urls.paper_account(self._account_id), headers=headers)
         return response.json()
 
     def get_account_id(self):
@@ -827,7 +826,7 @@ class paper_webull(webull):
 
     def get_history_orders(self, status='Cancelled', count=20):
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
-        response = requests.get(self._urls.paper_orders(self.paper_account_id, count) + str(status), headers=headers)
+        response = requests.get(self._urls.paper_orders(self._account_id, count) + str(status), headers=headers)
         return response.json()
 
     def get_positions(self):
@@ -864,7 +863,7 @@ class paper_webull(webull):
         if orderType == 'MKT':
             data['outsideRegularTradingHour'] = False
 
-        response = requests.post(self._urls.paper_place_order(self.paper_account_id, tId), json=data, headers=headers)
+        response = requests.post(self._urls.paper_place_order(self._account_id, tId), json=data, headers=headers)
         return response.json()
 
     def modify_order(self, order, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
@@ -889,7 +888,7 @@ class paper_webull(webull):
         else:
             data['quantity'] = int(quant)
 
-        response = requests.post(self._urls.paper_modify_order(self.paper_account_id, order['orderId']), json=data,
+        response = requests.post(self._urls.paper_modify_order(self._account_id, order['orderId']), json=data,
                                  headers=headers)
         if response:
             return True
@@ -902,9 +901,18 @@ class paper_webull(webull):
         Cancel a paper account order.
         """
         headers = self.build_req_headers()
-        response = requests.post(self._urls.paper_cancel_order(self.paper_account_id, order_id),
+        response = requests.post(self._urls.paper_cancel_order(self._account_id, order_id),
                                  headers=headers)
         return bool(response)
+
+    def cancel_all_orders(self):
+        '''
+        Cancels all open (aka 'working') paper account orders
+        '''
+        open_orders = self.get_current_orders()
+        for order in open_orders:
+            if order['status'] == 'Working' :
+                self.cancel_order(order['orderId'])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Interface with Webull. Paper trading is not the default.")
