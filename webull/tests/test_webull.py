@@ -13,7 +13,9 @@ python -m pytest -v
 
 '''
 
-# FIXTURES
+#####################################################
+#################     FIXTURES     ##################
+#####################################################
 
 urls = endpoints.urls()
 
@@ -28,12 +30,14 @@ def wb():
 
 
 
-# TESTS
+
+#####################################################
+#################     TESTS     #####################
+#####################################################
 
 @pytest.mark.skip(reason="TODO")
 def test_alerts_add():
 	pass
-
 
 @pytest.mark.skip(reason="TODO")
 def test_alerts_list():
@@ -125,15 +129,103 @@ def test_get_portfolio():
 
 @pytest.mark.skip(reason="TODO")
 def test_get_positions():
-	pass
+    pass
 
-@pytest.mark.skip(reason="TODO")
-def test_get_quote():
-	pass
+def test_get_quote(wb, reqmock):
 
-@pytest.mark.skip(reason="TODO")
-def test_get_ticker():
-	pass
+    # successful get_quote
+    stock = 'AAPL'
+    ticker = 913256135
+    wb.get_ticker = MagicMock(return_value=ticker)
+    reqmock.get(urls.stock_id(stock), text='''
+        {
+            "categoryId":0,
+            "categoryName":"综合",
+            "hasMore":true,
+            "list":[{
+                "tickerId":913256135,
+                "exchangeId":96,
+                "type":2,
+                "name":"Apple",
+                "symbol":"AAPL",
+                "disSymbol":"AAPL",
+                "disExchangeCode":"NASDAQ",
+                "exchangeCode":"NSQ",
+            }]
+        }
+    ''')
+
+    reqmock.get(urls.quotes(ticker), text='''
+        {
+            "open": "312.15",
+            "close": "307.65",
+            "high": "315.95",
+            "low": "303.21",
+            "tickerId": "913256135"
+        }
+    ''')
+
+    result = wb.get_quote(stock=stock)
+    assert result['open']  == '312.15'
+    assert result['close'] == '307.65'
+    assert result['high']  == '315.95'
+    assert result['low']   == '303.21'
+    assert result['tickerId'] == '913256135'
+
+    # failed get_quote, no stock or tId provided
+    with pytest.raises(ValueError):
+        wb.get_quote()
+
+    # failed get_quote, stock symbol doesn't exist
+    bad_stock_symbol = '__YOLOSWAG__'
+    wb.get_ticker = MagicMock(side_effect=ValueError('TickerId could not be found for stock __YOLOSWAG__'))
+    with pytest.raises(ValueError) as e:
+        wb.get_quote(bad_stock_symbol)
+
+def test_get_ticker(wb, reqmock):
+
+    # failed get_ticker, stock doesn't exist
+    bad_stock_symbol = '__YOLOSWAG__'
+    reqmock.get(urls.stock_id(bad_stock_symbol), text='''
+        { "hasMore": false }
+    ''')
+    with pytest.raises(ValueError) as e:
+        wb.get_ticker(bad_stock_symbol)
+        assert 'TickerId could not be found for stock {}'.format(bad_stock_symbol) in str(e.value)
+
+    # failed get_ticker, no stock provided
+    with pytest.raises(ValueError) as e:
+        wb.get_ticker()
+        assert 'Stock symbol is required' in str(e.value)
+
+    # successful get_ticker
+    good_stock_symbol = 'SBUX'
+    reqmock.get(urls.stock_id(good_stock_symbol), text='''
+        {
+            "categoryId":0,
+            "categoryName":"综合",
+            "hasMore":true,
+            "list":[{
+                "tickerId":913257472,
+                "exchangeId":96,
+                "type":2,
+                "secType":[61],
+                "regionId":6,
+                "regionCode":"US",
+                "currencyId":247,
+                "name":"Starbucks",
+                "symbol":"SBUX",
+                "disSymbol":"SBUX",
+                "disExchangeCode":"NASDAQ",
+                "exchangeCode":"NSQ",
+                "listStatus":1,
+                "template":"stock",
+                "derivativeSupport":1
+            }]
+        }
+    ''')
+    result = wb.get_ticker('SBUX')
+    assert result == 913257472
 
 @pytest.mark.skip(reason="TODO")
 def test_get_tradable():
@@ -143,7 +235,6 @@ def test_get_tradable():
 def test_get_trade_token():
 	pass
 
-@pytest.mark.skip(reason="TODO")
 def test_login(reqmock, wb):
     # [case 1] login fails, bad mobile username credentials
     reqmock.post(urls.login(), text='''
@@ -188,16 +279,17 @@ def test_login(reqmock, wb):
     with pytest.raises(ValueError):
         wb.login()
 
+@pytest.mark.skip(reason="TODO")
 def test_login_prompt():
 	pass
 
-@pytest.mark.skip(reason="TODO")
 def test_logout(wb, reqmock):
     # successful logout returns a 200 response
     reqmock.get(urls.logout(), status_code=200)
     resp = wb.logout()
     assert resp == 200
 
+@pytest.mark.skip(reason="TODO")
 def test_modify_order():
 	pass
 

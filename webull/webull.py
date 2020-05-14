@@ -242,15 +242,21 @@ class webull:
         Lookup ticker_id
         '''
         ticker_id = 0
-        response = requests.get(self._urls.stock_id(stock))
-        result = response.json()
-        if len(result['list']) == 1:
-            for item in result['list']:
-                ticker_id = item['tickerId']
+        if stock and isinstance(stock, str):
+            response = requests.get(self._urls.stock_id(stock))
+            result = response.json()
+            if result['hasMore'] == False:
+                raise ValueError('TickerId could not be found for stock {}'.format(stock))
+            elif result['list']:
+                for item in result['list']: # implies multiple tickers, but only assigns last one?
+                    ticker_id = item['tickerId']
+        else:
+            raise ValueError('Stock symbol is required')
         return ticker_id
 
 
-    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', qty=0, outsideRegularTradingHour=True):
+    def place_order(self, stock=None, tId=None, price=0, action='BUY',
+            orderType='LMT', enforce='GTC', qty=0, outsideRegularTradingHour=True):
         '''
         Place an order
 
@@ -267,7 +273,6 @@ class webull:
             raise ValueError('Must provide a stock symbol or a stock id')
 
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
-
         data = {
             'action': action,
             'lmtPrice': float(price),
@@ -279,13 +284,11 @@ class webull:
             'timeInForce': enforce
         }
 
-        #Market orders do not support extended hours trading.
+        # Market orders do not support extended hours trading.
         if orderType == 'MKT':
             data['outsideRegularTradingHour'] = False
 
         response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
-        #result = response.json()
-        #return result['success']
         return response.json()
 
 
@@ -409,22 +412,21 @@ class webull:
         response = requests.post(self._urls.cancel_otoco_orders(self._account_id), json=data, headers=headers)
         return response.json()
 
-
     def get_quote(self, stock=None, tId=None) :
         '''
         get price quote
         tId: ticker ID str
         '''
-        if not tId is None:
-            pass
-        elif not stock is None:
-            tId = self.get_ticker(stock)
-        else:
+        if not stock and not tId:
             raise ValueError('Must provide a stock symbol or a stock id')
 
+        if stock:
+            try:
+                tId = str(self.get_ticker(stock))
+            except ValueError as _e:
+                raise ValueError("Could not find ticker for stock {}".format(stock))
         response = requests.get(self._urls.quotes(tId))
         result = response.json()
-
         return result
 
     def get_option_quote(self, stock=None, optionId=None):
