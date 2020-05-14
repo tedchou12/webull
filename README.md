@@ -2,52 +2,68 @@
 APIs for webull, you are free to use, but code not extensively checked and Webull may update the APIs or the endpoints at any time.
 https://www.webull.com/
 
-# Usage
-How to use this package.
 
-How to login and get account details
+# Install
+
 ```
-import webull
-webull = webull.webull()
-webull.login('test@test.com', 'pa$$w0rd')
-webull.get_account_id()
-webull.get_trade_token('123456')
-print(webull.get_account())
+pip install webull
+```
+
+# Run tests
+
+```
+pip install pytest requests_mock
+python -m pytest -v
+```
+
+# Usage
+
+How to login with your email
+```
+from webull import webull # for paper trading, import 'paper_webull'
+
+wb = webull()
+wb.login('test@test.com', 'pa$$w0rd')
+
+```
+
+How to login with your mobile
+```
+from webull import webull # for paper trading, import 'paper_webull'
+
+wb = webull()
+wb.login('+1-1112223333', 'pa$$w0rd') # phone must be in format +[country_code]-[your number]
+
 ```
 
 How to order stock
 ```
-import webull
-webull = webull.webull()
-webull.login('test@test.com', 'pa$$w0rd')
-webull.get_account_id()
-webull.get_trade_token('123456')
-webull.place_order('NDAQ', 90.0, 2) //stock_ticker_symbol, price, quantity
+from webull import webull
+wb = webull()
+wb.login('test@test.com', 'pa$$w0rd')
+
+wb.get_trade_token('123456')
+wb.place_order(stock='AAPL', price=90.0, qty=2)
 ```
 
 How to check standing orders
 ```
-import webull
-webull = webull.webull()
-webull.login('test@test.com', 'pa$$w0rd')
-webull.get_account_id()
-webull.get_trade_token('123456')
-orders = webull.get_current_orders()
-for order in orders :
-  print(order)
+from webull import webull
+wb = webull()
+wb.login('test@test.com', 'pa$$w0rd')
+
+wb.get_trade_token('123456')
+orders = wb.get_current_orders()
 ```
 
 How to cancel standing orders
 ```
-import webull
-webull = webull.webull()
-webull.login('test@test.com', 'pa$$w0rd')
-webull.get_account_id()
-webull.get_trade_token('123456')
-orders = webull.get_current_orders()
-for order in orders :
-  if order['statusCode'] == 'Working' :
-    webull.cancel_order(order['orderId'])
+from webull import webull
+wb = webull()
+wb.login('test@test.com', 'pa$$w0rd')
+
+wb.get_trade_token('123456')
+wb.cancel_all_orders()
 ```
 
 # Stream Quotes
