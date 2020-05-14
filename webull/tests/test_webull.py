@@ -29,8 +29,6 @@ def wb():
     return webull()
 
 
-
-
 #####################################################
 #################     TESTS     #####################
 #####################################################
@@ -228,6 +226,14 @@ def test_get_ticker(wb, reqmock):
     assert result == 913257472
 
 @pytest.mark.skip(reason="TODO")
+def test_get_quote():
+	pass
+
+@pytest.mark.skip(reason="TODO")
+def test_get_ticker():
+	pass
+
+@pytest.mark.skip(reason="TODO")
 def test_get_tradable():
 	pass
 
@@ -283,13 +289,15 @@ def test_login(reqmock, wb):
 def test_login_prompt():
 	pass
 
+def test_login_prompt():
+	pass
+
 def test_logout(wb, reqmock):
     # successful logout returns a 200 response
     reqmock.get(urls.logout(), status_code=200)
     resp = wb.logout()
     assert resp == 200
 
-@pytest.mark.skip(reason="TODO")
 def test_modify_order():
 	pass
 
