@@ -26,10 +26,10 @@ class webull:
             "Accept-Encoding": "gzip, deflate",
             "Content-Type": "application/json",
         }
-        # self.auth_method = self.login_prompt
         self._access_token = ''
         self._account_id = ''
         self._refresh_token = ''
+        self._token_expire = ''
         self._trade_token = ''
         self._uuid = ''
         self._did = self._get_did()
@@ -76,6 +76,9 @@ class webull:
         CH '+86-XXXXXXXXXXX'
         '''
 
+        if not username or not password:
+            raise ValueError('username or password is empty')
+
         # with webull md5 hash salted
         password = ('wl_app-a&b@!423^' + password).encode('utf-8')
         md5_hash = hashlib.md5(password)
@@ -95,16 +98,14 @@ class webull:
 
         response = requests.post(self._urls.login(), json=data, headers=self._headers)
         result = response.json()
-
         if 'data' in result and 'accessToken' in result['data'] :
             self._access_token = result['data']['accessToken']
             self._refresh_token = result['data']['refreshToken']
-            self.token_expire = result['data']['tokenExpireTime']
+            self._token_expire = result['data']['tokenExpireTime']
             self._uuid = result['data']['uuid']
             self._account_id = self.get_account_id()
-            return True
-        else :
-            return False
+        return result
+
 
     def login_prompt(self):
         """
@@ -122,10 +123,7 @@ class webull:
         """
         headers = self.build_req_headers()
         response = requests.get(self._urls.logout(), headers=headers)
-        if response.status_code != 200:
-            return False
-        else:
-            return True
+        return response.status_code
 
     def refresh_login(self):
         # password = md5_hash.hexdigest()
@@ -139,10 +137,8 @@ class webull:
         if 'accessToken' in result and result['accessToken'] != '' and result['refreshToken'] != '' and result['tokenExpireTime'] != '':
             self._access_token = result['accessToken']
             self._refresh_token = result['refreshToken']
-            self.token_expire = result['tokenExpireTime']
-            return True
-        else:
-            return False
+            self._token_expire = result['tokenExpireTime']
+        return result
 
     '''
     get some contact details of your account name, email/phone, region, avatar...etc
