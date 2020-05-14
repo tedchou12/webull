@@ -903,7 +903,7 @@ class paper_webull(webull):
         if response:
             return True
         else:
-            print('Modify didn't succeed. {} {}'.format(response, response.json()))
+            print("Modify didn't succeed. {} {}".format(response, response.json()))
             return False
 
     def cancel_order(self, order_id):
