@@ -89,6 +89,9 @@ class webull:
         except EmailNotValidError as _e:
           accountType = 1 # phone
 
+        if device_name == '' :
+            device_name = 'default_string'
+
         data = {
             'account': username,
             'accountType': accountType,
@@ -120,7 +123,7 @@ class webull:
           accountType = 2 # email
         except EmailNotValidError as _e:
           accountType = 1 # phone
-        
+
         response = requests.get(self._urls.get_mfa(username, str(accountType), str(self._did), str(5), str(1)), headers=self._headers)
 
 
