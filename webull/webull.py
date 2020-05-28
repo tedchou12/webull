@@ -67,7 +67,7 @@ class webull:
         return headers
 
 
-    def login(self, username='', password=''):
+    def login(self, username='', password='', device_name='', mfa=''):
         '''
         Login with email or phone number
 
@@ -89,22 +89,42 @@ class webull:
         except EmailNotValidError as _e:
           accountType = 1 # phone
 
+        if device_name == '' :
+            device_name = 'default_string'
+
         data = {
             'account': username,
             'accountType': accountType,
             'deviceId': self._did,
+            'deviceName': device_name,
+            'grade': 1,
             'pwd': md5_hash.hexdigest(),
+            'regionId': 1
         }
 
-        response = requests.post(self._urls.login(), json=data, headers=self._headers)
+        if mfa != '' :
+            data['extInfo'] = {'verificationCode': mfa}
+            headers = self.build_req_headers()
+        else :
+            headers = self._headers
+        response = requests.post(self._urls.login(), json=data, headers=headers)
         result = response.json()
-        if 'data' in result and 'accessToken' in result['data'] :
-            self._access_token = result['data']['accessToken']
-            self._refresh_token = result['data']['refreshToken']
-            self._token_expire = result['data']['tokenExpireTime']
-            self._uuid = result['data']['uuid']
+        if 'accessToken' in result :
+            self._access_token = result['accessToken']
+            self._refresh_token = result['refreshToken']
+            self._token_expire = result['tokenExpireTime']
+            self._uuid = result['uuid']
             self._account_id = self.get_account_id()
         return result
+
+    def get_mfa(self, username):
+        try:
+          validate_email(username)
+          accountType = 2 # email
+        except EmailNotValidError as _e:
+          accountType = 1 # phone
+
+        response = requests.get(self._urls.get_mfa(username, str(accountType), str(self._did), str(5), str(1)), headers=self._headers)
 
 
     def login_prompt(self):
