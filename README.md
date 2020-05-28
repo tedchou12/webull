@@ -19,6 +19,10 @@ python -m pytest -v
 # Usage
 
 How to login with your email
+
+Webull has made Multi-Factor Authentication (MFA) mandatory since 2020/05/28, if you are having issues, take a look at here:
+https://github.com/tedchou12/webull/wiki/MFA
+
 ```
 from webull import webull # for paper trading, import 'paper_webull'
 
@@ -28,10 +32,6 @@ wb.login('test@test.com', 'pa$$w0rd')
 ```
 
 How to login with your mobile
-
-Webull has made Multi-Factor Authentication (MFA) mandatory since 2020/05/28, if you are having issues, take a look at here:
-https://github.com/tedchou12/webull/wiki/MFA
-
 ```
 from webull import webull # for paper trading, import 'paper_webull'
 
