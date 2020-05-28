@@ -97,13 +97,13 @@ class webull:
             'accountType': accountType,
             'deviceId': self._did,
             'deviceName': device_name,
-            'extInfo': {'verificationCode': mfa},
             'grade': 1,
             'pwd': md5_hash.hexdigest(),
             'regionId': 1
         }
 
         if mfa != '' :
+            data['extInfo'] = {'verificationCode': mfa}
             headers = self.build_req_headers()
         else :
             headers = self._headers
