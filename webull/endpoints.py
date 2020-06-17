@@ -132,3 +132,9 @@ class urls :
 
     def screener(self):
         return f'{self.base_userbroker_url}/wlas/screener/ng/query'
+
+    def social_posts(self, topic, num=100):
+        return f'{self.base_user_url}/social/feed/topic/{topic}/posts?size={num}'
+
+    def social_home(self, topic, num=100):
+        return f'{self.base_user_url}/social/feed/topic/{topic}/home?size={num}'
