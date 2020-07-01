@@ -855,11 +855,11 @@ class webull:
         result = response.json()[0].get('data')
         if extendTrading:
             for data in result:
-                if data['id'] == 'latestActivityPc.faList'
+                if data['id'] == 'latestActivityPc.faList':
                     rank = data['data']
         else:
             for data in result:
-                if data['id'] == 'latestActivityPc.5minutes'
+                if data['id'] == 'latestActivityPc.5minutes':
                     rank = data['data']
         return rank
 
