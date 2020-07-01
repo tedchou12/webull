@@ -111,6 +111,9 @@ class urls :
 
     def quotes(self, stock):
         return f'{self.base_quote_url}/quote/tickerRealTimes/v5/{stock}'
+    
+    def rankings(self):
+        return f'{self.base_securities_url}/securities/market/v5/6/portal'
 
     def refresh_login(self):
         return f'{self.base_user_url}/passport/refreshToken?refreshToken='
