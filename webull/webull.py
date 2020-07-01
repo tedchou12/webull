@@ -677,14 +677,14 @@ class webull:
             raise Exception('alerts_add failed', response.status_code, response.reason)
         return True
 
-    def get_active_gainer_loser(self, direction='gainer'):
+    def get_active_gainer_loser(self, direction='gainer', count=20):
         '''
         gets active / gainer / loser stocks sorted by change
         direction: active / gainer / loser
         '''
         headers = self.build_req_headers()
 
-        params = {'regionId': 6, 'userRegionId': 6}
+        params = {'regionId': 6, 'userRegionId': 6, 'pageSize': count}
         response = requests.get(self._urls.active_gainers_losers(direction), params=params, headers=headers)
         result = response.json()
         result = sorted(result, key=lambda k: k['change'], reverse=True)
