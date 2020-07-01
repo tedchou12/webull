@@ -844,6 +844,25 @@ class webull:
         response = requests.post(self._urls.dividends(self._account_id), json=data, headers=headers)
         return response.json()
 
+    def get_five_min_ranking(self, extendTrading=0):
+        '''
+        get 5 minute trend ranking
+        '''
+        rank = []
+        headers = self.build_req_headers()
+        params = {'regionId': 6, 'userRegionId': 6, 'platform': 'pc', 'limitCards': 'latestActivityPc'}
+        response = requests.get(self._urls.rankings(), params=params, headers=headers)
+        result = response.json()[0].get('data')
+        if extendTrading:
+            for data in result:
+                if data['id'] == 'latestActivityPc.faList'
+                    rank = data['data']
+        else:
+            for data in result:
+                if data['id'] == 'latestActivityPc.5minutes'
+                    rank = data['data']
+        return rank
+
 
 
 ''' Paper support '''
