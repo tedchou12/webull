@@ -265,11 +265,11 @@ class webull:
         if stock and isinstance(stock, str):
             response = requests.get(self._urls.stock_id(stock))
             result = response.json()
-            if result['hasMore'] == False:
-                raise ValueError('TickerId could not be found for stock {}'.format(stock))
-            elif result['list']:
-                for item in result['list']: # implies multiple tickers, but only assigns last one?
+            if result.get('data'):
+                for item in result['data']: # implies multiple tickers, but only assigns last one?
                     ticker_id = item['tickerId']
+            else:
+                raise ValueError('TickerId could not be found for stock {}'.format(stock))
         else:
             raise ValueError('Stock symbol is required')
         return ticker_id
