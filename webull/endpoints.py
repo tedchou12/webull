@@ -125,7 +125,7 @@ class urls :
         return f'{self.base_trade_url}/v2/option/replaceOrder/{account_id}'
 
     def stock_id(self, stock):
-        return f'{self.base_options_gw_url}/search/tickers5?keyword={stock}&pageIndex=1&pagesize=1'
+        return f'{self.base_options_gw_url}/search/tickers5?keyword={stock}&pageIndex=1&pageSize=1'
 
     def trade_token(self):
         return f'{self.base_trade_url}/login'
