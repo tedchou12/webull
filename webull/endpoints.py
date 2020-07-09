@@ -4,7 +4,7 @@ class urls :
         self.base_options_url = 'https://quoteapi.webullbroker.com/api'
         self.base_options_gw_url = 'https://quotes-gw.webullbroker.com/api'
         self.base_paper_url = 'https://act.webullbroker.com/webull-paper-center/api'
-        self.base_quote_url = 'https://quoteapi.webull.com/api'
+        self.base_quote_url = 'https://quoteapi.webullbroker.com/api'
         self.base_securities_url = 'https://securitiesapi.webullbroker.com/api'
         self.base_trade_url = 'https://tradeapi.webulltrade.com/api/trade'
         self.base_user_url = 'https://userapi.webull.com/api'
@@ -125,7 +125,7 @@ class urls :
         return f'{self.base_trade_url}/v2/option/replaceOrder/{account_id}'
 
     def stock_id(self, stock):
-        return f'{self.base_info_url}/search/tickers5?keys={stock}&queryNumber=1'
+        return f'{self.base_options_gw_url}/search/tickers5?keys={stock}&queryNumber=1'
 
     def trade_token(self):
         return f'{self.base_trade_url}/login'
