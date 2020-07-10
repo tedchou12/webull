@@ -935,6 +935,21 @@ class paper_webull(webull):
                                  headers=headers)
         return bool(response)
 
+    def get_social_posts(self, topic, num=100):
+        headers = self.build_req_headers()
+
+        response = requests.get(self._urls.social_posts(topic, num), headers=headers)
+        result = response.json()
+        return result
+
+
+    def get_social_home(self, topic, num=100):
+        headers = self.build_req_headers()
+
+        response = requests.get(self._urls.social_home(topic, num), headers=headers)
+        result = response.json()
+        return result
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Interface with Webull. Paper trading is not the default.')
