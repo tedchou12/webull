@@ -265,11 +265,11 @@ class webull:
         if stock and isinstance(stock, str):
             response = requests.get(self._urls.stock_id(stock))
             result = response.json()
-            if result['hasMore'] == False:
-                raise ValueError('TickerId could not be found for stock {}'.format(stock))
-            elif result['list']:
-                for item in result['list']: # implies multiple tickers, but only assigns last one?
+            if result.get('data'):
+                for item in result['data']: # implies multiple tickers, but only assigns last one?
                     ticker_id = item['tickerId']
+            else:
+                raise ValueError('TickerId could not be found for stock {}'.format(stock))
         else:
             raise ValueError('Stock symbol is required')
         return ticker_id
@@ -449,13 +449,20 @@ class webull:
         result = response.json()
         return result
 
-    def get_option_quote(self, stock=None, optionId=None):
+    def get_option_quote(self, stock=None, tId=None, optionId=None):
         '''
         get option quote
         '''
+        if not stock and not tId:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
+        if stock:
+            try:
+                tId = str(self.get_ticker(stock))
+            except ValueError as _e:
+                raise ValueError("Could not find ticker for stock {}".format(stock))
         headers = self.build_req_headers()
-        stock = self.get_ticker(stock)
-        params = {'tickerId': int(stock), 'derivativeIds': int(optionId)}
+        params = {'tickerId': tId, 'derivativeIds': optionId}
         return requests.get(self._urls.option_quotes(), params=params, headers=headers).json()
 
     def get_options_expiration_dates(self, stock=None, count=-1):
@@ -542,9 +549,9 @@ class webull:
         data = {
             'comboId': order['comboId'],
             'orderType': order['orderType'],
-            'timeInForce': enforce if enforce else order['timeInForce'],
+            'timeInForce': enforce or order['timeInForce'],
             'serialId': str(uuid.uuid4()),
-            'orders': [{'quantity': quant if int(quant) > 0 else order['totalQuantity'],
+            'orders': [{'quantity': quant or order['totalQuantity'],
                         'action': order['action'],
                         'tickerId': order['ticker']['tickerId'],
                         'tickerType': 'OPTION',
@@ -552,12 +559,12 @@ class webull:
         }
 
         if order['orderType'] == 'LMT' and (lmtPrice or order['lmtPrice']):
-            data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
+            data['lmtPrice'] = lmtPrice or order['lmtPrice']
         if order['orderType'] and (stpPrice or order['auxPrice']):
-            data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
+            data['auxPrice'] = stpPrice or order['auxPrice']
         if order['orderType'] == 'STP LMT' and (stpPrice or order['auxPrice']) and (lmtPrice or order['lmtPrice']):
-            data['auxPrice'] = stpPrice if stpPrice else order['auxPrice']
-            data['lmtPrice'] = lmtPrice if lmtPrice else order['lmtPrice']
+            data['auxPrice'] = stpPrice or order['auxPrice']
+            data['lmtPrice'] = lmtPrice or order['lmtPrice']
 
         response = requests.post(self._urls.replace_option_orders(self._account_id), json=data, headers=headers)
         if response.status_code != 200:
@@ -670,14 +677,14 @@ class webull:
             raise Exception('alerts_add failed', response.status_code, response.reason)
         return True
 
-    def get_active_gainer_loser(self, direction='gainer'):
+    def get_active_gainer_loser(self, direction='gainer', count=20):
         '''
         gets active / gainer / loser stocks sorted by change
         direction: active / gainer / loser
         '''
         headers = self.build_req_headers()
 
-        params = {'regionId': 6, 'userRegionId': 6}
+        params = {'regionId': 6, 'userRegionId': 6, 'pageSize': count}
         response = requests.get(self._urls.active_gainers_losers(direction), params=params, headers=headers)
         result = response.json()
         result = sorted(result, key=lambda k: k['change'], reverse=True)
@@ -744,13 +751,14 @@ class webull:
         params = {'currentNewsId': Id, 'pageSize': items}
         return requests.get(self._urls.news(self.get_ticker(stock)), params=params).json()
 
-    def get_bars(self, stock=None, tId = None, interval='m1', count=1, extendTrading=0) :
+    def get_bars(self, stock=None, tId = None, interval='m1', count=1, extendTrading=0, timeStamp=None):
         '''
         get bars returns a pandas dataframe
         params:
             interval: m1, m5, m15, m30, h1, h2, h4, d1, w1
             count: number of bars to return
             extendTrading: change to 1 for pre-market and afterhours bars
+            timeStamp: If epoc timestamp is provided, return bar count up to timestamp. If not set default to current time.
         '''
         if not tId is None:
             pass
@@ -759,7 +767,7 @@ class webull:
         else:
             raise ValueError('Must provide a stock symbol or a stock id')
 
-        params = {'type': interval, 'count': count, 'extendTrading': extendTrading}
+        params = {'type': interval, 'count': count, 'extendTrading': extendTrading, 'timestamp': timeStamp}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
         response = requests.get(self._urls.bars(tId), params=params)
@@ -835,6 +843,25 @@ class webull:
         data = {}
         response = requests.post(self._urls.dividends(self._account_id), json=data, headers=headers)
         return response.json()
+
+    def get_five_min_ranking(self, extendTrading=0):
+        '''
+        get 5 minute trend ranking
+        '''
+        rank = []
+        headers = self.build_req_headers()
+        params = {'regionId': 6, 'userRegionId': 6, 'platform': 'pc', 'limitCards': 'latestActivityPc'}
+        response = requests.get(self._urls.rankings(), params=params, headers=headers)
+        result = response.json()[0].get('data')
+        if extendTrading:
+            for data in result:
+                if data['id'] == 'latestActivityPc.faList':
+                    rank = data['data']
+        else:
+            for data in result:
+                if data['id'] == 'latestActivityPc.5minutes':
+                    rank = data['data']
+        return rank
 
 
 
