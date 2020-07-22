@@ -420,8 +420,7 @@ class webull:
         '''
         open_orders = self.get_current_orders()
         for order in open_orders:
-            if order['status'] == 'Working' :
-                self.cancel_order(order['orderId'])
+            self.cancel_order(order['orderId'])
 
     def cancel_otoco_order(self, order_id=''):
         '''
