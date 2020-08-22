@@ -432,14 +432,12 @@ class webull:
         response = requests.post(self._urls.cancel_otoco_orders(self._account_id), json=data, headers=headers)
         return response.json()
 
-    def get_quote(self, stock=None, tId=None, lvl_two=False) :
+    def get_quote(self, stock=None, tId=None):
         '''
         get price quote
         tId: ticker ID str
         '''
         headers = self.build_req_headers()
-        if lvl_two:
-            headers = self.build_req_headers(include_trade_token=True, include_time=True)
         if not stock and not tId:
             raise ValueError('Must provide a stock symbol or a stock id')
 
