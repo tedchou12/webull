@@ -261,9 +261,10 @@ class webull:
         '''
         Lookup ticker_id
         '''
+        headers = self.build_req_headers()
         ticker_id = 0
         if stock and isinstance(stock, str):
-            response = requests.get(self._urls.stock_id(stock))
+            response = requests.get(self._urls.stock_id(stock), headers=headers)
             result = response.json()
             if result.get('data'):
                 for item in result['data']: # implies multiple tickers, but only assigns last one?
@@ -431,11 +432,14 @@ class webull:
         response = requests.post(self._urls.cancel_otoco_orders(self._account_id), json=data, headers=headers)
         return response.json()
 
-    def get_quote(self, stock=None, tId=None) :
+    def get_quote(self, stock=None, tId=None, lvl_two=False) :
         '''
         get price quote
         tId: ticker ID str
         '''
+        headers = self.build_req_headers()
+        if lvl_two:
+            headers = self.build_req_headers(include_trade_token=True, include_time=True)
         if not stock and not tId:
             raise ValueError('Must provide a stock symbol or a stock id')
 
@@ -444,7 +448,7 @@ class webull:
                 tId = str(self.get_ticker(stock))
             except ValueError as _e:
                 raise ValueError("Could not find ticker for stock {}".format(stock))
-        response = requests.get(self._urls.quotes(tId))
+        response = requests.get(self._urls.quotes(tId), headers=headers)
         result = response.json()
         return result
 
@@ -468,8 +472,9 @@ class webull:
         '''
         returns a list of options expiration dates
         '''
+        headers = self.build_req_headers()
         data = {'count': count}
-        return requests.get(self._urls.options_exp_date(self.get_ticker(stock)), params=data).json()['expireDateList']
+        return requests.get(self._urls.options_exp_date(self.get_ticker(stock)), params=data, headers=headers).json()['expireDateList']
 
     def get_options(self, stock=None, count=-1, includeWeekly=1, direction='all', expireDate=None, queryAll=0):
         '''
@@ -482,6 +487,7 @@ class webull:
             expireDate: contract expire date
             queryAll: 0
         '''
+        headers = self.build_req_headers()
         # get next closet expiredate if none is provided
         if not expireDate:
             dates = self.get_options_expiration_dates(stock)[0]['date']
@@ -493,14 +499,15 @@ class webull:
 
         params = {'count': count, 'includeWeekly': includeWeekly, 'direction': direction,
                 'expireDate': expireDate, 'unSymbol': stock, 'queryAll': queryAll}
-        return requests.get(self._urls.options(self.get_ticker(stock)), params=params).json()['data']
+        return requests.get(self._urls.options(self.get_ticker(stock)), params=params, headers=headers).json()['data']
 
     def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all'):
         '''
         get a list of options contracts by expire date and strike price
         strike: string
         '''
-        opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
+        headers = self.build_req_headers()
+        opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction, headers=headers)
         return [c for c in opts if c['strikePrice'] == strike]
 
     def place_option_order(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0):
@@ -575,7 +582,8 @@ class webull:
         '''
         get if stock is tradable
         '''
-        response = requests.get(self._urls.is_tradable(self.get_ticker(stock)))
+        headers = self.build_req_headers()
+        response = requests.get(self._urls.is_tradable(self.get_ticker(stock), headers=headers))
         return response.json()
 
 
@@ -732,13 +740,15 @@ class webull:
         '''
         get analysis info and returns a dict of analysis ratings
         '''
-        return requests.get(self._urls.analysis(self.get_ticker(stock))).json()
+        headers = self.build_req_headers()
+        return requests.get(self._urls.analysis(self.get_ticker(stock)), headers=headers).json()
 
     def get_financials(self, stock=None):
         '''
         get financials info and returns a dict of financial info
         '''
-        return requests.get(self._urls.fundamentals(self.get_ticker(stock))).json()
+        headers = self.build_req_headers()
+        return requests.get(self._urls.fundamentals(self.get_ticker(stock)), headers=headers).json()
 
     def get_news(self, stock=None, Id=0, items=20):
         '''
@@ -747,8 +757,9 @@ class webull:
             Id: 0 is latest news article
             items: number of articles to return
         '''
+        headers = self.build_req_headers()
         params = {'currentNewsId': Id, 'pageSize': items}
-        return requests.get(self._urls.news(self.get_ticker(stock)), params=params).json()
+        return requests.get(self._urls.news(self.get_ticker(stock)), params=params, headers=headers).json()
 
     def get_bars(self, stock=None, tId = None, interval='m1', count=1, extendTrading=0, timeStamp=None):
         '''
@@ -759,6 +770,7 @@ class webull:
             extendTrading: change to 1 for pre-market and afterhours bars
             timeStamp: If epoc timestamp is provided, return bar count up to timestamp. If not set default to current time.
         '''
+        headers = self.build_req_headers()
         if not tId is None:
             pass
         elif not stock is None:
@@ -769,7 +781,7 @@ class webull:
         params = {'type': interval, 'count': count, 'extendTrading': extendTrading, 'timestamp': timeStamp}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
-        response = requests.get(self._urls.bars(tId), params=params)
+        response = requests.get(self._urls.bars(tId), params=params, headers=headers)
         result = response.json()
         time_zone = timezone(result[0]['timeZone'])
         for row in result[0]['data']:
@@ -797,6 +809,7 @@ class webull:
         :param tId:
         :return: dict of 'market open', 'market close', 'last trade date'
         '''
+        headers = self.build_req_headers()
         if not tId is None:
             pass
         elif not stock is None:
@@ -805,7 +818,7 @@ class webull:
             raise ValueError('Must provide a stock symbol or a stock id')
 
         params = {'type': 'm1', 'count': 1, 'extendTrading': 0}
-        response = requests.get(self._urls.bars(tId), params=params)
+        response = requests.get(self._urls.bars(tId), params=params, headers=headers)
         result = response.json()
         time_zone = timezone(result[0]['timeZone'])
         last_trade_date = datetime.fromtimestamp(int(result[0]['data'][0].split(',')[0])).astimezone(time_zone)
