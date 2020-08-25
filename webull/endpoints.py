@@ -6,7 +6,7 @@ class urls :
         self.base_paper_url = 'https://act.webullbroker.com/webull-paper-center/api'
         self.base_quote_url = 'https://quoteapi.webullbroker.com/api'
         self.base_securities_url = 'https://securitiesapi.webullbroker.com/api'
-        self.base_trade_url = 'https://tradeapi.webulltrade.com/api/trade'
+        self.base_trade_url = 'https://tradeapi.webullbroker.com/api/trade'
         self.base_user_url = 'https://userapi.webull.com/api'
         self.base_userbroker_url = 'https://userapi.webullbroker.com/api'
 
