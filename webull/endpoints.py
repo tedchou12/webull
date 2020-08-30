@@ -110,7 +110,7 @@ class urls :
         return f'{self.base_trade_url}/v2/corder/stock/place/{account_id}'
 
     def quotes(self, stock):
-        return f'{self.base_quote_url}/quote/tickerRealTimes/v5/{stock}'
+        return f'{self.base_options_gw_url}/quotes/ticker/getTickerRealTime?tickerId={stock}&includeSecu=1&includeQuote=1'
 
     def rankings(self):
         return f'{self.base_securities_url}/securities/market/v5/6/portal'
