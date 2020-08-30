@@ -7,6 +7,10 @@ https://www.webull.com/
 
 ```
 pip install webull
+
+or
+
+python3 -m pip install webull
 ```
 
 # Run tests
