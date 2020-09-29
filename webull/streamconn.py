@@ -237,9 +237,9 @@ if __name__ == '__main__':
     conn.order_func = on_order_message
 
     if not webull.access_token is None and len(webull.access_token) > 1:
-        conn.connect(webull.did, access_token=webull.access_token)
+        conn.connect(webull._did, access_token=webull.access_token)
     else:
-        conn.connect(webull.did)
+        conn.connect(webull._did)
 
     conn.subscribe(tId='913256135') #AAPL
     conn.run_loop_once()
