@@ -488,7 +488,7 @@ class webull:
         headers = self.build_req_headers()
         # get next closet expiredate if none is provided
         if not expireDate:
-            dates = self.get_options_expiration_dates(stock)[0]['date']
+            dates = self.get_options_expiration_dates(stock)
             # ensure we don't provide an option that has < 1 day to expire
             for d in dates:
                 if d['days'] > 0:
