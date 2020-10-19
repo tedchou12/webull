@@ -117,6 +117,13 @@ class webull:
             self._account_id = self.get_account_id()
         return result
 
+    def api_login(self, access_token='', refresh_token='', token_expire='', uuid='', mfa=''):
+        self._access_token = access_token
+        self._refresh_token = refresh_token
+        self._token_expire = token_expire
+        self._uuid = uuid
+        self._account_id = self.get_account_id()
+
     def get_mfa(self, username):
         try:
           validate_email(username)
