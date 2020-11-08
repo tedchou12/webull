@@ -32,6 +32,7 @@ class webull:
         self._token_expire = ''
         self._trade_token = ''
         self._uuid = ''
+        self._region_code = 6
         self._did = self._get_did()
         self._urls = endpoints.urls()
 
@@ -99,7 +100,7 @@ class webull:
             'deviceName': device_name,
             'grade': 1,
             'pwd': md5_hash.hexdigest(),
-            'regionId': 1
+            'regionId': self._region_code
         }
 
         if mfa != '' :
@@ -267,15 +268,20 @@ class webull:
     def get_ticker(self, stock=''):
         '''
         Lookup ticker_id
+        Ticker issue, will attempt to find an exact match, if none is found, match the first one
         '''
         headers = self.build_req_headers()
         ticker_id = 0
         if stock and isinstance(stock, str):
-            response = requests.get(self._urls.stock_id(stock), headers=headers)
+            response = requests.get(self._urls.stock_id(stock, self._region_code), headers=headers)
             result = response.json()
-            if result.get('data'):
-                for item in result['data']: # implies multiple tickers, but only assigns last one?
-                    ticker_id = item['tickerId']
+            if result.get('data') :
+                for item in result['data'] : # implies multiple tickers, but only assigns last one?
+                    if item['symbol'] == stock :
+                        ticker_id = item['tickerId']
+                        break
+                if ticker_id == 0 :
+                    ticker_id = result['data'][0]['tickerId']
             else:
                 raise ValueError('TickerId could not be found for stock {}'.format(stock))
         else:
