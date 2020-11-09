@@ -36,16 +36,21 @@ class webull:
         self._did = self._get_did()
         self._urls = endpoints.urls()
 
-    def _get_did(self):
+    def _get_did(self, path=''):
         '''
         Makes a unique device id from a random uuid (uuid.uuid4).
         if the pickle file doesn't exist, this func will generate a random 32 character hex string
         uuid and save it in a pickle file for future use. if the file already exists it will
         load the pickle file to reuse the did. Having a unique did appears to be very important
         for the MQTT web socket protocol
+
+        path: path to did.bin. For example _get_did('cache') will search for cache/did.bin instead.
+
         :return: hex string of a 32 digit uuid
         '''
         filename = 'did.bin'
+        if path:
+            filename = os.path.join(path, filename)        
         if os.path.exists(filename):
             did = pickle.load(open(filename,'rb'))
         else:
