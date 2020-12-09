@@ -548,9 +548,9 @@ class webull:
 
         if orderType == 'LMT' and lmtPrice:
             data['lmtPrice'] = float(lmtPrice)
-        if orderType == 'STP' and stpPrice:
+        elif orderType == 'STP' and stpPrice:
             data['auxPrice'] = float(stpPrice)
-        if orderType == 'STP LMT' and lmtPrice and stpPrice:
+        elif orderType == 'STP LMT' and lmtPrice and stpPrice:
             data['lmtPrice'] = float(lmtPrice)
             data['auxPrice'] = float(stpPrice)
 
@@ -580,11 +580,11 @@ class webull:
                         'orderId': order['orderId']}]
         }
 
-        if order['orderType'] == 'LMT' and (lmtPrice or order['lmtPrice']):
+        if order['orderType'] == 'LMT' and (lmtPrice or order.get('lmtPrice')):
             data['lmtPrice'] = lmtPrice or order['lmtPrice']
-        if order['orderType'] and (stpPrice or order['auxPrice']):
+        elif order['orderType'] == 'STP' and (stpPrice or order.get('auxPrice')):
             data['auxPrice'] = stpPrice or order['auxPrice']
-        if order['orderType'] == 'STP LMT' and (stpPrice or order['auxPrice']) and (lmtPrice or order['lmtPrice']):
+        elif order['orderType'] == 'STP LMT' and (stpPrice or order.get('auxPrice')) and (lmtPrice or order.get('lmtPrice')):
             data['auxPrice'] = stpPrice or order['auxPrice']
             data['lmtPrice'] = lmtPrice or order['lmtPrice']
 
