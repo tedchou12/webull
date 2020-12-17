@@ -522,8 +522,8 @@ class webull:
         get a list of options contracts by expire date and strike price
         strike: string
         '''
-        headers = self.build_req_headers()
-        opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction, headers=headers)
+
+        opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
         return [c for c in opts if c['strikePrice'] == strike]
 
     def place_option_order(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0):
