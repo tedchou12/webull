@@ -25,6 +25,9 @@ class webull:
             'Accept': '*/*',
             'Accept-Encoding': 'gzip, deflate',
             'Content-Type': 'application/json',
+            'platform': 'web',
+            'ver': '3.20.22',
+            'User-Agent': '*'
         }
         self._access_token = ''
         self._account_id = ''
@@ -330,6 +333,42 @@ class webull:
         response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
         return response.json()
 
+    def place_order_crypto(self, stock=None, tId=None, price=0, action='BUY',
+            orderType='LMT', enforce='DAY', entrust_type='QTY', qty=0, outsideRegularTradingHour=False):
+        '''
+        Place Crypto order
+        price: Limit order entry price
+        qty: dollar amount to buy/sell when entrust_type is CASH else the decimal or fractional amount of shares to buy
+        action: BUY / SELL
+        entrust_type: CASH / QTY
+        ordertype : LMT / MKT
+        timeinforce:  DAY
+        outsideRegularTradingHour: True / False
+        '''
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+        data = {
+            'action': action,
+            'assetType': 'crypto',
+            'comboType': 'NORMAL',
+            'entrustType': entrust_type,
+            'lmtPrice': str(price),
+            'orderType': orderType,
+            'outsideRegularTradingHour': outsideRegularTradingHour,
+            'quantity': str(qty),
+            'serialId': str(uuid.uuid4()),
+            'tickerId': tId,
+            'timeInForce': enforce
+        }
+
+        response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
+        return response.json()
 
     def modify_order(self, order=None, price=0, action=None, orderType=None, enforce=None, quant=0, outsideRegularTradingHour=None):
         '''
