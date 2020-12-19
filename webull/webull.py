@@ -25,9 +25,6 @@ class webull:
             'Accept': '*/*',
             'Accept-Encoding': 'gzip, deflate',
             'Content-Type': 'application/json',
-            'platform': 'web',
-            'ver': '3.20.22',
-            'User-Agent': '*'
         }
         self._access_token = ''
         self._account_id = ''
@@ -35,25 +32,19 @@ class webull:
         self._token_expire = ''
         self._trade_token = ''
         self._uuid = ''
-        self._region_code = 6
         self._did = self._get_did()
         self._urls = endpoints.urls()
 
-    def _get_did(self, path=''):
+    def _get_did(self):
         '''
         Makes a unique device id from a random uuid (uuid.uuid4).
         if the pickle file doesn't exist, this func will generate a random 32 character hex string
         uuid and save it in a pickle file for future use. if the file already exists it will
         load the pickle file to reuse the did. Having a unique did appears to be very important
         for the MQTT web socket protocol
-
-        path: path to did.bin. For example _get_did('cache') will search for cache/did.bin instead.
-
         :return: hex string of a 32 digit uuid
         '''
         filename = 'did.bin'
-        if path:
-            filename = os.path.join(path, filename)        
         if os.path.exists(filename):
             did = pickle.load(open(filename,'rb'))
         else:
@@ -108,7 +99,7 @@ class webull:
             'deviceName': device_name,
             'grade': 1,
             'pwd': md5_hash.hexdigest(),
-            'regionId': self._region_code
+            'regionId': 1
         }
 
         if mfa != '' :
@@ -200,6 +191,7 @@ class webull:
         result = response.json()
         if result['success']:
             id = str(result['data'][0]['secAccountId'])
+            self._account_id = id
             return id
         else:
             return None
@@ -276,20 +268,15 @@ class webull:
     def get_ticker(self, stock=''):
         '''
         Lookup ticker_id
-        Ticker issue, will attempt to find an exact match, if none is found, match the first one
         '''
         headers = self.build_req_headers()
         ticker_id = 0
         if stock and isinstance(stock, str):
-            response = requests.get(self._urls.stock_id(stock, self._region_code), headers=headers)
+            response = requests.get(self._urls.stock_id(stock), headers=headers)
             result = response.json()
-            if result.get('data') :
-                for item in result['data'] : # implies multiple tickers, but only assigns last one?
-                    if item['symbol'] == stock :
-                        ticker_id = item['tickerId']
-                        break
-                if ticker_id == 0 :
-                    ticker_id = result['data'][0]['tickerId']
+            if result.get('data'):
+                for item in result['data']: # implies multiple tickers, but only assigns last one?
+                    ticker_id = item['tickerId']
             else:
                 raise ValueError('TickerId could not be found for stock {}'.format(stock))
         else:
@@ -333,42 +320,6 @@ class webull:
         response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
         return response.json()
 
-    def place_order_crypto(self, stock=None, tId=None, price=0, action='BUY',
-            orderType='LMT', enforce='DAY', entrust_type='QTY', qty=0, outsideRegularTradingHour=False):
-        '''
-        Place Crypto order
-        price: Limit order entry price
-        qty: dollar amount to buy/sell when entrust_type is CASH else the decimal or fractional amount of shares to buy
-        action: BUY / SELL
-        entrust_type: CASH / QTY
-        ordertype : LMT / MKT
-        timeinforce:  DAY
-        outsideRegularTradingHour: True / False
-        '''
-        if not tId is None:
-            pass
-        elif not stock is None:
-            tId = self.get_ticker(stock)
-        else:
-            raise ValueError('Must provide a stock symbol or a stock id')
-
-        headers = self.build_req_headers(include_trade_token=True, include_time=True)
-        data = {
-            'action': action,
-            'assetType': 'crypto',
-            'comboType': 'NORMAL',
-            'entrustType': entrust_type,
-            'lmtPrice': str(price),
-            'orderType': orderType,
-            'outsideRegularTradingHour': outsideRegularTradingHour,
-            'quantity': str(qty),
-            'serialId': str(uuid.uuid4()),
-            'tickerId': tId,
-            'timeInForce': enforce
-        }
-
-        response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
-        return response.json()
 
     def modify_order(self, order=None, price=0, action=None, orderType=None, enforce=None, quant=0, outsideRegularTradingHour=None):
         '''
@@ -561,8 +512,8 @@ class webull:
         get a list of options contracts by expire date and strike price
         strike: string
         '''
-
-        opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
+        headers = self.build_req_headers()
+        opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction, headers=headers)
         return [c for c in opts if c['strikePrice'] == strike]
 
     def place_option_order(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0):
@@ -587,9 +538,9 @@ class webull:
 
         if orderType == 'LMT' and lmtPrice:
             data['lmtPrice'] = float(lmtPrice)
-        elif orderType == 'STP' and stpPrice:
+        if orderType == 'STP' and stpPrice:
             data['auxPrice'] = float(stpPrice)
-        elif orderType == 'STP LMT' and lmtPrice and stpPrice:
+        if orderType == 'STP LMT' and lmtPrice and stpPrice:
             data['lmtPrice'] = float(lmtPrice)
             data['auxPrice'] = float(stpPrice)
 
@@ -619,11 +570,11 @@ class webull:
                         'orderId': order['orderId']}]
         }
 
-        if order['orderType'] == 'LMT' and (lmtPrice or order.get('lmtPrice')):
+        if order['orderType'] == 'LMT' and (lmtPrice or order['lmtPrice']):
             data['lmtPrice'] = lmtPrice or order['lmtPrice']
-        elif order['orderType'] == 'STP' and (stpPrice or order.get('auxPrice')):
+        if order['orderType'] and (stpPrice or order['auxPrice']):
             data['auxPrice'] = stpPrice or order['auxPrice']
-        elif order['orderType'] == 'STP LMT' and (stpPrice or order.get('auxPrice')) and (lmtPrice or order.get('lmtPrice')):
+        if order['orderType'] == 'STP LMT' and (stpPrice or order['auxPrice']) and (lmtPrice or order['lmtPrice']):
             data['auxPrice'] = stpPrice or order['auxPrice']
             data['lmtPrice'] = lmtPrice or order['lmtPrice']
 
@@ -929,16 +880,6 @@ class webull:
                 if data['id'] == 'latestActivityPc.5minutes':
                     rank = data['data']
         return rank
-
-    def get_watchlists(self):
-        """
-        get user watchlists
-        :return:
-        """
-        headers = self.build_req_headers()
-        params = {'version': 0}
-        response = requests.get(self._urls.portfolio_lists(), params=params, headers=headers)
-        return response.json()['portfolioList']
 
 
 
