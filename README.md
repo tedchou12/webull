@@ -74,6 +74,9 @@ wb.get_trade_token('123456')
 wb.cancel_all_orders()
 ```
 
+# FAQ
+Thank you so much, I have received Emails and messages on reddit from many traders/developers that liked this project. Thanks to many that helped and contributed to this project too! There are quite a few repeated questions on the same topic, so I have utilized the Wiki section for them. If you have troubles regarding *Login/MFA Logins*, *Real Time Quote Data*, *What is Trade PIN/Trade Token*, or *How to buy me a coffee* please take a look at the Wiki pages first. https://github.com/tedchou12/webull/wiki
+
 # Stream Quotes
 https://github.com/tedchou12/webull/wiki/How-to-use-Streaming-Quotes%3F
 
