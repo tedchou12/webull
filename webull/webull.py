@@ -53,7 +53,7 @@ class webull:
         '''
         filename = 'did.bin'
         if path:
-            filename = os.path.join(path, filename)        
+            filename = os.path.join(path, filename)
         if os.path.exists(filename):
             did = pickle.load(open(filename,'rb'))
         else:
@@ -200,6 +200,7 @@ class webull:
         result = response.json()
         if result['success']:
             id = str(result['data'][0]['secAccountId'])
+            self._account_id = id
             return id
         else:
             return None
