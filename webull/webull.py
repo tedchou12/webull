@@ -930,6 +930,16 @@ class webull:
                     rank = data['data']
         return rank
 
+    def get_watchlists(self):
+        """
+        get user watchlists
+        :return:
+        """
+        headers = self.build_req_headers()
+        params = {'version': 0}
+        response = requests.get(self._urls.portfolio_lists(), params=params, headers=headers)
+        return response.json()['portfolioList']
+
 
 
 ''' Paper support '''
