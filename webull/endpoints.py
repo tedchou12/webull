@@ -9,6 +9,7 @@ class urls :
         self.base_trade_url = 'https://tradeapi.webullbroker.com/api/trade'
         self.base_user_url = 'https://userapi.webull.com/api'
         self.base_userbroker_url = 'https://userapi.webullbroker.com/api'
+        self.base_ustrade_url = 'https://ustrade.webullfinance.com/api'
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v2/home/{account_id}'
@@ -98,7 +99,7 @@ class urls :
         return f'{self.base_paper_url}/paper/1/acc/{paper_account_id}/orderop/place/{stock}'
 
     def place_option_orders(self, account_id):
-        return f'{self.base_trade_url}/v2/option/placeOrder/{account_id}'
+        return f'{self.base_ustrade_url}/trade/v2/option/placeOrder/{account_id}'
 
     def place_orders(self, account_id):
         return f'{self.base_trade_url}/order/{account_id}/placeStockOrder'
