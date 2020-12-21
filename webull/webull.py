@@ -583,14 +583,14 @@ class webull:
             'orderType': orderType,
             'serialId': str(uuid.uuid4()),
             'timeInForce': enforce,
-            'orders': [{'quantity': quant, 'action': action, 'tickerId': optionId, 'tickerType': 'OPTION'}],
+            'orders': [{'quantity': int(quant), 'action': action, 'tickerId': int(optionId), 'tickerType': 'OPTION'}],
         }
 
-        if orderType == 'LMT' and lmtPrice:
+        if orderType == 'LMT' and lmtPrice :
             data['lmtPrice'] = float(lmtPrice)
-        elif orderType == 'STP' and stpPrice:
+        elif orderType == 'STP' and stpPrice :
             data['auxPrice'] = float(stpPrice)
-        elif orderType == 'STP LMT' and lmtPrice and stpPrice:
+        elif orderType == 'STP LMT' and lmtPrice and stpPrice :
             data['lmtPrice'] = float(lmtPrice)
             data['auxPrice'] = float(stpPrice)
 
