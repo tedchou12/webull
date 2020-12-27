@@ -126,13 +126,6 @@ class webull:
             self._account_id = self.get_account_id()
         return result
 
-    def api_login(self, access_token='', refresh_token='', token_expire='', uuid='', mfa=''):
-        self._access_token = access_token
-        self._refresh_token = refresh_token
-        self._token_expire = token_expire
-        self._uuid = uuid
-        self._account_id = self.get_account_id()
-
     def get_mfa(self, username):
         try:
           validate_email(username)
@@ -141,7 +134,6 @@ class webull:
           accountType = 1 # phone
 
         response = requests.get(self._urls.get_mfa(username, str(accountType), str(self._did), str(5), str(1)), headers=self._headers)
-
 
     def login_prompt(self):
         '''
@@ -161,6 +153,13 @@ class webull:
         response = requests.get(self._urls.logout(), headers=headers)
         return response.status_code
 
+    def api_login(self, access_token='', refresh_token='', token_expire='', uuid='', mfa=''):
+        self._access_token = access_token
+        self._refresh_token = refresh_token
+        self._token_expire = token_expire
+        self._uuid = uuid
+        self._account_id = self.get_account_id()
+
     def refresh_login(self):
         '''
         Refresh login token
@@ -176,7 +175,6 @@ class webull:
             self._token_expire = result['tokenExpireTime']
         return result
 
-
     def get_detail(self):
         '''
         get some contact details of your account name, email/phone, region, avatar...etc
@@ -187,7 +185,6 @@ class webull:
         result = response.json()
 
         return result
-
 
     def get_account_id(self):
         '''
@@ -205,7 +202,6 @@ class webull:
         else:
             return None
 
-
     def get_account(self):
         '''
         get important details of account, positions, portfolio stance...etc
@@ -215,14 +211,12 @@ class webull:
         result = response.json()
         return result
 
-
     def get_positions(self):
         '''
         output standing positions of stocks
         '''
         data = self.get_account()
         return data['positions']
-
 
     def get_portfolio(self):
         '''
@@ -234,14 +228,12 @@ class webull:
             output[item['key']] = item['value']
         return output
 
-
     def get_current_orders(self):
         '''
         Get open/standing orders
         '''
         data = self.get_account()
         return data['openOrders']
-
 
     def get_history_orders(self, status='Cancelled', count=20):
         '''
@@ -251,7 +243,6 @@ class webull:
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
         response = requests.get(self._urls.orders(self._account_id, count) + str(status), headers=headers)
         return response.json()
-
 
     def get_trade_token(self, password=''):
         '''
@@ -272,7 +263,6 @@ class webull:
             return True
         else:
             return False
-
 
     def get_ticker(self, stock=''):
         '''
@@ -297,14 +287,33 @@ class webull:
             raise ValueError('Stock symbol is required')
         return ticker_id
 
+    '''
+    Actions related to stock
+    '''
+    def get_quote(self, stock=None, tId=None):
+        '''
+        get price quote
+        tId: ticker ID str
+        '''
+        headers = self.build_req_headers()
+        if not stock and not tId:
+            raise ValueError('Must provide a stock symbol or a stock id')
 
-    def place_order(self, stock=None, tId=None, price=0, action='BUY',
-            orderType='LMT', enforce='GTC', qty=0, outsideRegularTradingHour=True):
+        if stock:
+            try:
+                tId = str(self.get_ticker(stock))
+            except ValueError as _e:
+                raise ValueError("Could not find ticker for stock {}".format(stock))
+        response = requests.get(self._urls.quotes(tId), headers=headers)
+        result = response.json()
+        return result
+
+    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True):
         '''
         Place an order
 
         action: BUY / SELL
-        ordertype : LMT / MKT / STP / STP LMT
+        ordertype : LMT / MKT / STP / STP LMT / STP TRAIL
         timeinforce:  GTC / DAY / IOC
         outsideRegularTradingHour: True / False
         '''
@@ -321,7 +330,7 @@ class webull:
             'lmtPrice': float(price),
             'orderType': orderType,
             'outsideRegularTradingHour': outsideRegularTradingHour,
-            'quantity': int(qty),
+            'quantity': int(quant),
             'serialId': str(uuid.uuid4()),
             'tickerId': tId,
             'timeInForce': enforce
@@ -334,49 +343,12 @@ class webull:
         response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
         return response.json()
 
-    def place_order_crypto(self, stock=None, tId=None, price=0, action='BUY',
-            orderType='LMT', enforce='DAY', entrust_type='QTY', qty=0, outsideRegularTradingHour=False):
-        '''
-        Place Crypto order
-        price: Limit order entry price
-        qty: dollar amount to buy/sell when entrust_type is CASH else the decimal or fractional amount of shares to buy
-        action: BUY / SELL
-        entrust_type: CASH / QTY
-        ordertype : LMT / MKT
-        timeinforce:  DAY
-        outsideRegularTradingHour: True / False
-        '''
-        if not tId is None:
-            pass
-        elif not stock is None:
-            tId = self.get_ticker(stock)
-        else:
-            raise ValueError('Must provide a stock symbol or a stock id')
-
-        headers = self.build_req_headers(include_trade_token=True, include_time=True)
-        data = {
-            'action': action,
-            'assetType': 'crypto',
-            'comboType': 'NORMAL',
-            'entrustType': entrust_type,
-            'lmtPrice': str(price),
-            'orderType': orderType,
-            'outsideRegularTradingHour': outsideRegularTradingHour,
-            'quantity': str(qty),
-            'serialId': str(uuid.uuid4()),
-            'tickerId': tId,
-            'timeInForce': enforce
-        }
-
-        response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
-        return response.json()
-
     def modify_order(self, order=None, price=0, action=None, orderType=None, enforce=None, quant=0, outsideRegularTradingHour=None):
         '''
         Modify an order
 
         action: BUY / SELL
-        ordertype : LMT / MKT / STP / STP LMT
+        ordertype : LMT / MKT / STP / STP LMT / STP TRAIL
         timeinforce:  GTC / DAY / IOC
         outsideRegularTradingHour: True / False
         '''
@@ -411,9 +383,17 @@ class webull:
 
         return response.json()
 
+    def cancel_order(self, order_id=''):
+        '''
+        Cancel an order
+        '''
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+        data = {}
+        response = requests.post(self._urls.cancel_order(self._account_id) + str(order_id) + '/' + str(uuid.uuid4()), json=data, headers=headers)
+        result = response.json()
+        return result['success']
 
-    def place_otoco_order(self, stock='', price='', stop_loss_price='', limit_profit_price='',
-        time_in_force='DAY', quant=0):
+    def place_order_otoco(self, stock='', price='', stop_loss_price='', limit_profit_price='', time_in_force='DAY', quant=0):
         '''
         OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
         Submit a buy order, its fill will trigger sell order placement. If one sell fills, it will cancel the other
@@ -461,27 +441,7 @@ class webull:
             print(result1['checkResultList'][0]['msg'])
             return False
 
-
-    def cancel_order(self, order_id=''):
-        '''
-        Cancel an order
-        '''
-        headers = self.build_req_headers(include_trade_token=True, include_time=True)
-        data = {}
-        response = requests.post(self._urls.cancel_order(self._account_id) + str(order_id) + '/' + str(uuid.uuid4()), json=data, headers=headers)
-        result = response.json()
-        return result['success']
-
-
-    def cancel_all_orders(self):
-        '''
-        Cancels all open (aka 'working') orders
-        '''
-        open_orders = self.get_current_orders()
-        for order in open_orders:
-            self.cancel_order(order['orderId'])
-
-    def cancel_otoco_order(self, order_id=''):
+    def cancel_order_otoco(self, order_id=''):
         '''
         Retract an otoco order. Cancelling the MASTER order_id cancels the sub orders.
         '''
@@ -490,24 +450,48 @@ class webull:
         response = requests.post(self._urls.cancel_otoco_orders(self._account_id), json=data, headers=headers)
         return response.json()
 
-    def get_quote(self, stock=None, tId=None):
+    '''
+    Actions related to cryptos
+    '''
+    def place_order_crypto(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='DAY', entrust_type='QTY', quant=0, outsideRegularTradingHour=False) :
         '''
-        get price quote
-        tId: ticker ID str
+        Place Crypto order
+        price: Limit order entry price
+        quant: dollar amount to buy/sell when entrust_type is CASH else the decimal or fractional amount of shares to buy
+        action: BUY / SELL
+        entrust_type: CASH / QTY
+        ordertype : LMT / MKT
+        timeinforce:  DAY
+        outsideRegularTradingHour: True / False
         '''
-        headers = self.build_req_headers()
-        if not stock and not tId:
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
             raise ValueError('Must provide a stock symbol or a stock id')
 
-        if stock:
-            try:
-                tId = str(self.get_ticker(stock))
-            except ValueError as _e:
-                raise ValueError("Could not find ticker for stock {}".format(stock))
-        response = requests.get(self._urls.quotes(tId), headers=headers)
-        result = response.json()
-        return result
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+        data = {
+            'action': action,
+            'assetType': 'crypto',
+            'comboType': 'NORMAL',
+            'entrustType': entrust_type,
+            'lmtPrice': str(price),
+            'orderType': orderType,
+            'outsideRegularTradingHour': outsideRegularTradingHour,
+            'quantity': str(quant),
+            'serialId': str(uuid.uuid4()),
+            'tickerId': tId,
+            'timeInForce': enforce
+        }
 
+        response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
+        return response.json()
+
+    '''
+    Actions related to options
+    '''
     def get_option_quote(self, stock=None, tId=None, optionId=None):
         '''
         get option quote
@@ -566,7 +550,7 @@ class webull:
         opts = self.get_options(stock=stock, expireDate=expireDate, direction=direction)
         return [c for c in opts if c['strikePrice'] == strike]
 
-    def place_option_order(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0):
+    def place_order_option(self, optionId=None, lmtPrice=None, stpPrice=None, action=None, orderType='LMT', enforce='DAY', quant=0):
         '''
         create buy / sell order
         stock: string
@@ -574,8 +558,8 @@ class webull:
         stpPrice: float
         action: string BUY / SELL
         optionId: string
-        orderType: LMT / STP / STP LMT
-        enforce: DAY
+        orderType: MKT / LMT / STP / STP LMT
+        enforce: GTC / DAY
         quant: int
         '''
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
@@ -599,12 +583,12 @@ class webull:
             raise Exception('place_option_order failed', response.status_code, response.reason)
         return True
 
-    def replace_option_order(self, order=None, lmtPrice=None, stpPrice=None, enforce=None, quant=0):
+    def modify_order_option(self, order=None, lmtPrice=None, stpPrice=None, enforce=None, quant=0):
         '''
         order: dict from get_current_orders
         stpPrice: float
         lmtPrice: float
-        enforce: DAY
+        enforce: GTC / DAY
         quant: int
         '''
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
@@ -633,6 +617,13 @@ class webull:
             raise Exception('replace_option_order failed', response.status_code, response.reason)
         return True
 
+    def cancel_all_orders(self):
+        '''
+        Cancels all open (aka 'working') orders
+        '''
+        open_orders = self.get_current_orders()
+        for order in open_orders:
+            self.cancel_order(order['orderId'])
 
     def get_tradable(self, stock=''):
         '''
@@ -641,7 +632,6 @@ class webull:
         headers = self.build_req_headers()
         response = requests.get(self._urls.is_tradable(self.get_ticker(stock), headers=headers))
         return response.json()
-
 
     def alerts_list(self):
         '''
@@ -752,7 +742,6 @@ class webull:
         result = response.json()
         result = sorted(result, key=lambda k: k['change'], reverse=True)
         return result
-
 
     def run_screener(self, region=None, price_lte=None, price_gte=None, pct_chg_gte=None, pct_chg_lte=None, sort=None,
                      sort_dir=None, vol_lte=None, vol_gte=None):
