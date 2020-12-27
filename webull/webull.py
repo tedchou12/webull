@@ -747,7 +747,7 @@ class webull:
         '''
         headers = self.build_req_headers()
 
-        params = {'regionId': 6, 'userRegionId': 6, 'pageSize': count}
+        params = {'regionId': self._region_code, 'userRegionId': self._region_code, 'pageSize': count}
         response = requests.get(self._urls.active_gainers_losers(direction), params=params, headers=headers)
         result = response.json()
         result = sorted(result, key=lambda k: k['change'], reverse=True)
@@ -917,7 +917,7 @@ class webull:
         '''
         rank = []
         headers = self.build_req_headers()
-        params = {'regionId': 6, 'userRegionId': 6, 'platform': 'pc', 'limitCards': 'latestActivityPc'}
+        params = {'regionId': self._region_code, 'userRegionId': self._region_code, 'platform': 'pc', 'limitCards': 'latestActivityPc'}
         response = requests.get(self._urls.rankings(), params=params, headers=headers)
         result = response.json()[0].get('data')
         if extendTrading:
