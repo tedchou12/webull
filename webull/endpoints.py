@@ -17,6 +17,9 @@ class urls :
     def account_id(self):
         return f'{self.base_trade_url}/account/getSecAccountList/v4'
 
+    def account_activities(self, account_id):
+        return f'{self.base_ustrade_url}/trade/v2/funds/{account_id}/activities'
+
     def active_gainers_losers(self, direction):
         if direction == 'gainer':
             url = 'advanced'

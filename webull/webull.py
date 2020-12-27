@@ -228,7 +228,17 @@ class webull:
             output[item['key']] = item['value']
         return output
 
-    def get_current_orders(self):
+    def get_activities(self, index=1, size=500) :
+        '''
+        Activities including transfers, trades and dividends
+        '''
+        headers = self.build_req_headers(include_trade_token=True, include_time=True)
+        data = {'pageIndex': index,
+                'pageSize': size}
+        response = requests.post(self._urls.account_activities(self._account_id), json=data, headers=headers)
+        return response.json()
+
+    def get_current_orders(self) :
         '''
         Get open/standing orders
         '''
