@@ -15,7 +15,7 @@ class urls :
         return f'{self.base_trade_url}/v2/home/{account_id}'
 
     def account_id(self):
-        return f'{self.base_trade_url}/account/getSecAccountList/v4'
+        return f'{self.base_trade_url}/account/getSecAccountList/v5'
 
     def account_activities(self, account_id):
         return f'{self.base_ustrade_url}/trade/v2/funds/{account_id}/activities'
