@@ -406,7 +406,7 @@ class webull:
         result = response.json()
         return result['success']
 
-    def place_order_otoco(self, stock='', price='', stop_loss_price='', limit_profit_price='', time_in_force='DAY', quant=0):
+    def place_order_otoco(self, stock='', price='', stop_loss_price='', limit_profit_price='', time_in_force='DAY', quant=0) :
         '''
         OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
         Submit a buy order, its fill will trigger sell order placement. If one sell fills, it will cancel the other
@@ -430,37 +430,63 @@ class webull:
         response1 = requests.post(self._urls.check_otoco_orders(self._account_id), json=data1, headers=headers)
         result1 = response1.json()
 
-        if result1['forward']:
-            data2 = {
-                'newOrders': [
-                    {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant),
-                     'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
-                     'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(uuid.uuid4())},
-                    {'orderType': 'STP', 'timeInForce': time_in_force, 'quantity': int(quant),
-                     'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
-                     'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(uuid.uuid4())},
-                    {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant),
-                     'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
-                     'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(uuid.uuid4())}],
-                    'serialId': str(uuid.uuid4())
-                }
+        if result1['forward'] :
+            data2 = {'newOrders': [
+                            {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant),
+                             'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
+                             'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(uuid.uuid4())},
+                            {'orderType': 'STP', 'timeInForce': time_in_force, 'quantity': int(quant),
+                             'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
+                             'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(uuid.uuid4())},
+                            {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant),
+                             'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
+                             'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(uuid.uuid4())}],
+                            'serialId': str(uuid.uuid4())
+                    }
 
             response2 = requests.post(self._urls.place_otoco_orders(self._account_id), json=data2, headers=headers)
 
-            print('Resp 2: {}'.format(response2))
-            return True
+            # print('Resp 2: {}'.format(response2))
+            return response2.text
         else:
             print(result1['checkResultList'][0]['code'])
             print(result1['checkResultList'][0]['msg'])
             return False
 
-    def cancel_order_otoco(self, order_id=''):
+    def modify_order_otoco(self, order_id1='', order_id2='', order_id3='', stock='', price='', stop_loss_price='', limit_profit_price='', time_in_force='DAY', quant=0) :
+        '''
+        OTOCO: One-triggers-a-one-cancels-the-others, aka Bracket Ordering
+        Submit a buy order, its fill will trigger sell order placement. If one sell fills, it will cancel the other
+         sell
+        '''
+        headers = self.build_req_headers(include_trade_token=False, include_time=True)
+        
+        data = {'modifyOrders': [
+                        {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id1),
+                         'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
+                         'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(uuid.uuid4())},
+                        {'orderType': 'STP', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id2),
+                         'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
+                         'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(uuid.uuid4())},
+                        {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id3),
+                         'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
+                         'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(uuid.uuid4())}],
+                        'serialId': str(uuid.uuid4())
+                }
+
+        response = requests.post(self._urls.modify_otoco_orders(self._account_id), json=data, headers=headers)
+
+        # print('Resp: {}'.format(response))
+        return response.text
+
+    def cancel_order_otoco(self, combo_id=''):
         '''
         Retract an otoco order. Cancelling the MASTER order_id cancels the sub orders.
         '''
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
-        data = { 'serialId': str(uuid.uuid4()), 'cancelOrders': [str(order_id)]}
-        response = requests.post(self._urls.cancel_otoco_orders(self._account_id), json=data, headers=headers)
+        # data = { 'serialId': str(uuid.uuid4()), 'cancelOrders': [str(order_id)]}
+        data = {}
+        response = requests.post(self._urls.cancel_otoco_orders(self._account_id, combo_id), json=data, headers=headers)
         return response.json()
 
     '''

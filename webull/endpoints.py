@@ -42,8 +42,11 @@ class urls :
     def cancel_order(self, account_id):
         return f'{self.base_trade_url}/order/{account_id}/cancelStockOrder/'
 
-    def cancel_otoco_orders(self, account_id):
+    def modify_otoco_orders(self, account_id):
         return f'{self.base_trade_url}/v2/corder/stock/modify/{account_id}'
+
+    def cancel_otoco_orders(self, account_id, combo_id):
+        return f'{self.base_trade_url}/v2/corder/stock/cancel/{account_id}/{combo_id}'
 
     def check_otoco_orders(self, account_id):
         return f'{self.base_trade_url}/v2/corder/stock/check/{account_id}'
