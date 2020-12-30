@@ -10,12 +10,13 @@ class urls :
         self.base_user_url = 'https://userapi.webull.com/api'
         self.base_userbroker_url = 'https://userapi.webullbroker.com/api'
         self.base_ustrade_url = 'https://ustrade.webullfinance.com/api'
+        self.base_paperfintech_url = 'https://act.webullfintech.com/webull-paper-center/api'
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v2/home/{account_id}'
 
     def account_id(self):
-        return f'{self.base_trade_url}/account/getSecAccountList/v4'
+        return f'{self.base_trade_url}/account/getSecAccountList/v5'
 
     def account_activities(self, account_id):
         return f'{self.base_ustrade_url}/trade/v2/funds/{account_id}/activities'
@@ -87,7 +88,7 @@ class urls :
         return f'{self.base_paper_url}/paper/1/acc/{paper_account_id}/order?&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
 
     def paper_account(self, paper_account_id):
-        return f'{self.base_paper_url}/paper/1/acc/{paper_account_id}'
+        return f'{self.base_paperfintech_url}/paper/1/acc/{paper_account_id}'
 
     def paper_account_id(self):
         return f'{self.base_paper_url}/myaccounts/true'

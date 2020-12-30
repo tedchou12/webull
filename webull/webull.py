@@ -286,7 +286,10 @@ class webull:
             result = response.json()
             if result.get('data') :
                 for item in result['data'] : # implies multiple tickers, but only assigns last one?
-                    if item['symbol'] == stock :
+                    if 'symbol' in item and item['symbol'] == stock :
+                        ticker_id = item['tickerId']
+                        break
+                    elif 'disSymbol' in item and item['disSymbol'] == stock :
                         ticker_id = item['tickerId']
                         break
                 if ticker_id == 0 :
@@ -547,9 +550,16 @@ class webull:
                     expireDate = d['date']
                     break
 
-        params = {'count': count, 'includeWeekly': includeWeekly, 'direction': direction,
-                'expireDate': expireDate, 'unSymbol': stock, 'queryAll': queryAll}
-        return requests.get(self._urls.options(self.get_ticker(stock)), params=params, headers=headers).json()['data']
+        params = {'count': count,
+                  'includeWeekly': includeWeekly,
+                  'direction': direction,
+                  'expireDate': expireDate,
+                  'unSymbol': stock,
+                  'queryAll': queryAll}
+
+        data = requests.get(self._urls.options(self.get_ticker(stock)), params=params, headers=headers).json()
+
+        return data['data']
 
     def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all'):
         '''
@@ -591,7 +601,7 @@ class webull:
         response = requests.post(self._urls.place_option_orders(self._account_id), json=data, headers=headers)
         if response.status_code != 200:
             raise Exception('place_option_order failed', response.status_code, response.reason)
-        return True
+        return response.text
 
     def modify_order_option(self, order=None, lmtPrice=None, stpPrice=None, enforce=None, quant=0):
         '''
@@ -960,6 +970,7 @@ class paper_webull(webull):
         response = requests.get(self._urls.paper_account_id(), headers=headers)
         result = response.json()
         id = result[0]['id']
+        self._account_id = id
         return id
 
     def get_current_orders(self):
