@@ -431,21 +431,17 @@ class webull:
         result1 = response1.json()
 
         if result1['forward'] :
-            serial_id1 = uuid.uuid4()
-            serial_id2 = uuid.uuid4()
-            serial_id3 = uuid.uuid4()
-            serial_idm = uuid.uuid4()
             data2 = {'newOrders': [
                             {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant),
                              'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
-                             'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(serial_id1)},
+                             'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(uuid.uuid4())},
                             {'orderType': 'STP', 'timeInForce': time_in_force, 'quantity': int(quant),
                              'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
-                             'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(serial_id2)},
+                             'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(uuid.uuid4())},
                             {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant),
                              'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
-                             'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(serial_id3)}],
-                            'serialId': str(serial_idm)
+                             'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(uuid.uuid4())}],
+                            'serialId': str(uuid.uuid4())
                     }
 
             response2 = requests.post(self._urls.place_otoco_orders(self._account_id), json=data2, headers=headers)
@@ -464,22 +460,18 @@ class webull:
          sell
         '''
         headers = self.build_req_headers(include_trade_token=False, include_time=True)
-
-        serial_id1 = uuid.uuid4()
-        serial_id2 = uuid.uuid4()
-        serial_id3 = uuid.uuid4()
-        serial_idm = uuid.uuid4()
+        
         data = {'modifyOrders': [
                         {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id1),
                          'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
-                         'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(serial_id1)},
+                         'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(uuid.uuid4())},
                         {'orderType': 'STP', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id2),
                          'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
-                         'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(serial_id2)},
+                         'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(uuid.uuid4())},
                         {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id3),
                          'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
-                         'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(serial_id3)}],
-                        'serialId': str(serial_idm)
+                         'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(uuid.uuid4())}],
+                        'serialId': str(uuid.uuid4())
                 }
 
         response = requests.post(self._urls.modify_otoco_orders(self._account_id), json=data, headers=headers)
