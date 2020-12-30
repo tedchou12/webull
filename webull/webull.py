@@ -321,7 +321,7 @@ class webull:
         result = response.json()
         return result
 
-    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True):
+    def place_order(self, stock=None, tId=None, price=0, stp_price=None, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True, trial_value=0, trial_type='DOLLAR'):
         '''
         Place an order
 
@@ -340,7 +340,6 @@ class webull:
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
         data = {
             'action': action,
-            'lmtPrice': float(price),
             'orderType': orderType,
             'outsideRegularTradingHour': outsideRegularTradingHour,
             'quantity': int(quant),
@@ -350,8 +349,18 @@ class webull:
         }
 
         # Market orders do not support extended hours trading.
-        if orderType == 'MKT':
+        if orderType == 'MKT' :
             data['outsideRegularTradingHour'] = False
+        elif orderType == 'LMT':
+            data['lmtPrice'] = float(price)
+        elif orderType == 'STP' :
+            data['auxPrice'] = float(stp_price)
+        elif orderType == 'STP LMT' :
+            data['lmtPrice'] = float(price)
+            data['auxPrice'] = float(stp_price)
+        elif orderType == 'STP TRAIL' :
+            data['trailingStopStep'] = float(trial_value)
+            data['trailingType'] = 'DOLLAR' # PERCENTAGE
 
         response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
         return response.json()
@@ -460,7 +469,7 @@ class webull:
          sell
         '''
         headers = self.build_req_headers(include_trade_token=False, include_time=True)
-        
+
         data = {'modifyOrders': [
                         {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id1),
                          'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
