@@ -321,14 +321,18 @@ class webull:
         result = response.json()
         return result
 
-    def place_order(self, stock=None, tId=None, price=0, stp_price=None, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True, trial_value=0, trial_type='DOLLAR'):
+    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True, stpPrice=None, trial_value=0, trial_type='DOLLAR'):
         '''
         Place an order
 
+        price: float (LMT / STP LMT Only)
         action: BUY / SELL
         ordertype : LMT / MKT / STP / STP LMT / STP TRAIL
         timeinforce:  GTC / DAY / IOC
         outsideRegularTradingHour: True / False
+        stpPrice: float (STP / STP LMT Only)
+        trial_value: float (STP TRIAL Only)
+        trial_type: DOLLAR / PERCENTAGE (STP TRIAL Only)
         '''
         if not tId is None:
             pass
@@ -354,13 +358,13 @@ class webull:
         elif orderType == 'LMT':
             data['lmtPrice'] = float(price)
         elif orderType == 'STP' :
-            data['auxPrice'] = float(stp_price)
+            data['auxPrice'] = float(stpPrice)
         elif orderType == 'STP LMT' :
             data['lmtPrice'] = float(price)
-            data['auxPrice'] = float(stp_price)
+            data['auxPrice'] = float(stpPrice)
         elif orderType == 'STP TRAIL' :
             data['trailingStopStep'] = float(trial_value)
-            data['trailingType'] = 'DOLLAR' # PERCENTAGE
+            data['trailingType'] = str(trial_type)
 
         response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
         return response.json()
