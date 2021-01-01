@@ -321,14 +321,18 @@ class webull:
         result = response.json()
         return result
 
-    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True):
+    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True, stpPrice=None, trial_value=0, trial_type='DOLLAR'):
         '''
         Place an order
 
+        price: float (LMT / STP LMT Only)
         action: BUY / SELL
         ordertype : LMT / MKT / STP / STP LMT / STP TRAIL
         timeinforce:  GTC / DAY / IOC
         outsideRegularTradingHour: True / False
+        stpPrice: float (STP / STP LMT Only)
+        trial_value: float (STP TRIAL Only)
+        trial_type: DOLLAR / PERCENTAGE (STP TRIAL Only)
         '''
         if not tId is None:
             pass
@@ -340,7 +344,6 @@ class webull:
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
         data = {
             'action': action,
-            'lmtPrice': float(price),
             'orderType': orderType,
             'outsideRegularTradingHour': outsideRegularTradingHour,
             'quantity': int(quant),
@@ -350,8 +353,18 @@ class webull:
         }
 
         # Market orders do not support extended hours trading.
-        if orderType == 'MKT':
+        if orderType == 'MKT' :
             data['outsideRegularTradingHour'] = False
+        elif orderType == 'LMT':
+            data['lmtPrice'] = float(price)
+        elif orderType == 'STP' :
+            data['auxPrice'] = float(stpPrice)
+        elif orderType == 'STP LMT' :
+            data['lmtPrice'] = float(price)
+            data['auxPrice'] = float(stpPrice)
+        elif orderType == 'STP TRAIL' :
+            data['trailingStopStep'] = float(trial_value)
+            data['trailingType'] = str(trial_type)
 
         response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
         return response.json()
@@ -460,7 +473,7 @@ class webull:
          sell
         '''
         headers = self.build_req_headers(include_trade_token=False, include_time=True)
-        
+
         data = {'modifyOrders': [
                         {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id1),
                          'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
