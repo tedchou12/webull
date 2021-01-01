@@ -9,6 +9,7 @@ class urls :
         self.base_trade_url = 'https://tradeapi.webullbroker.com/api/trade'
         self.base_user_url = 'https://userapi.webull.com/api'
         self.base_userbroker_url = 'https://userapi.webullbroker.com/api'
+        self.base_userfintech_url = 'https://userapi.webullbroker.com/api'
         self.base_ustrade_url = 'https://ustrade.webullfinance.com/api'
         self.base_paperfintech_url = 'https://act.webullfintech.com/webull-paper-center/api'
 
@@ -66,8 +67,8 @@ class urls :
     def login(self):
         return f'{self.base_user_url}/passport/login/v3/account'
 
-    def get_mfa(self, account, account_type, device_id, code_type, region_code):
-        return f'{self.base_user_url}/passport/verificationCode/sendCode?account={account}&accountType={account_type}&deviceId={device_id}&codeType={code_type}&regionCode={region_code}'
+    def get_mfa(self) :
+        return f'{self.base_userfintech_url}/passport/v2/verificationCode/send'
 
     def logout(self):
         return f'{self.base_userbroker_url}/passport/login/logout'
