@@ -133,7 +133,11 @@ class webull:
         except EmailNotValidError as _e:
           accountType = 1 # phone
 
-        response = requests.get(self._urls.get_mfa(username, str(accountType), str(self._did), str(5), str(1)), headers=self._headers)
+        data = {'account': str(username),
+                'accountType': str(accountType),
+                'codeType': int(5)}
+        
+        response = requests.post(self._urls.get_mfa(), json=data, headers=self._headers)
 
     def login_prompt(self):
         '''
@@ -460,7 +464,7 @@ class webull:
          sell
         '''
         headers = self.build_req_headers(include_trade_token=False, include_time=True)
-        
+
         data = {'modifyOrders': [
                         {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id1),
                          'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
