@@ -26,7 +26,7 @@ class webull:
             'Accept-Encoding': 'gzip, deflate',
             'Content-Type': 'application/json',
             'platform': 'web',
-            'ver': '3.20.22',
+            'ver': '3.21.14',
             'User-Agent': '*'
         }
         self._access_token = ''
