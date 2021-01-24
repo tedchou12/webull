@@ -65,7 +65,7 @@ class urls :
         return f'{self.base_userbroker_url}/user/warning/v2/query/tickers'
 
     def login(self):
-        return f'{self.base_user_url}/passport/login/v3/account'
+        return f'{self.base_user_url}/passport/login/v5/account'
 
     def get_mfa(self) :
         return f'{self.base_userfintech_url}/passport/v2/verificationCode/send'
