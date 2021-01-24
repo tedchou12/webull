@@ -27,7 +27,8 @@ class webull:
             'Content-Type': 'application/json',
             'platform': 'web',
             'ver': '3.21.14',
-            'User-Agent': '*'
+            'User-Agent': '*',
+            'did': self._get_did(),
         }
         self._access_token = ''
         self._account_id = ''
@@ -136,7 +137,7 @@ class webull:
         data = {'account': str(username),
                 'accountType': str(accountType),
                 'codeType': int(5)}
-        
+
         response = requests.post(self._urls.get_mfa(), json=data, headers=self._headers)
 
     def login_prompt(self):
