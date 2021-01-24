@@ -1012,9 +1012,12 @@ class paper_webull(webull):
         headers = self.build_req_headers()
         response = requests.get(self._urls.paper_account_id(), headers=headers)
         result = response.json()
-        id = result[0]['id']
-        self._account_id = id
-        return id
+        if result is not None and result[0] is not None:
+            id = result[0]['id']
+            self._account_id = id
+            return id
+        else:
+            return None
 
     def get_current_orders(self):
         ''' Open paper trading orders '''
