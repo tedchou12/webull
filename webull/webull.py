@@ -118,11 +118,14 @@ class webull:
             headers = self._headers
         response = requests.post(self._urls.login(), json=data, headers=headers)
         result = response.json()
-        if 'accessToken' in result :
-            self._access_token = result['accessToken']
-            self._refresh_token = result['refreshToken']
-            self._token_expire = result['tokenExpireTime']
-            self._uuid = result['uuid']
+
+        data = result['data'] if 'data' in result else None
+
+        if data is not None and 'accessToken' in data :
+            self._access_token = data['accessToken']
+            self._refresh_token = data['refreshToken']
+            self._token_expire = data['tokenExpireTime']
+            self._uuid = data['uuid']
             self._account_id = self.get_account_id()
         return result
 
