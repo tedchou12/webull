@@ -237,9 +237,53 @@ def test_get_ticker():
 def test_get_tradable():
 	pass
 
-@pytest.mark.skip(reason="TODO")
-def test_get_trade_token():
-	pass
+def test_get_trade_token(wb: webull, reqmock):
+    # [case 1] get_trade_token fails, access token is expired
+    reqmock.post(urls.trade_token(), text='''
+        {
+            "msg": "AccessToken is expire",
+            "traceId": "644a083877ce4233b8cd770be897b814",
+            "code": "auth.token.expire",
+            "success": false
+        }
+    ''')
+
+    any_password = '123456'
+    resp = wb.get_trade_token(any_password)
+    assert resp == False
+    assert wb._trade_token == ''
+
+    # [case 2] get_trade_token fails, password is incorrect
+    reqmock.post(urls.trade_token(), text='''
+        {
+            "msg":"'Inner server error", 
+            "traceId": "5c491c65a9af4dfa98294f877a1379d7", 
+            "code": "trade.pwd.invalid", 
+            "data": { "fail": 1.0, "retry": 4.0 }, 
+            "success": false
+        }
+    ''')
+
+    bad_password = '123456'
+    resp = wb.get_trade_token(bad_password)
+    assert resp == False
+    assert wb._trade_token == ''
+
+    # [case 2] get_trade_token succeeds, password is incorrect
+    reqmock.post(urls.trade_token(), text='''
+        {
+            "success": true, 
+            "data": {
+                "tradeToken": "xxxxxxxxxx",
+                "tradeTokenExpireIn": 28800000
+            }
+        }
+    ''')
+
+    good_password = '123456'
+    resp = wb.get_trade_token(good_password)
+    assert resp == True
+    assert wb._trade_token == 'xxxxxxxxxx'
 
 def test_login(reqmock, wb):
     # [case 1] login fails, bad mobile username credentials
