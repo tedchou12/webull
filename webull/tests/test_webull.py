@@ -242,7 +242,7 @@ def test_get_trade_token(wb: webull, reqmock):
     reqmock.post(urls.trade_token(), text='''
         {
             "msg": "AccessToken is expire",
-            "traceId": "644a083877ce4233b8cd770be897b814",
+            "traceId": "xxxxxxxxxxxxxxxxxxxxxxxxxx",
             "code": "auth.token.expire",
             "success": false
         }
@@ -257,7 +257,7 @@ def test_get_trade_token(wb: webull, reqmock):
     reqmock.post(urls.trade_token(), text='''
         {
             "msg":"'Inner server error", 
-            "traceId": "5c491c65a9af4dfa98294f877a1379d7", 
+            "traceId": "xxxxxxxxxxxxxxxxxxxxxxxxxx", 
             "code": "trade.pwd.invalid", 
             "data": { "fail": 1.0, "retry": 4.0 }, 
             "success": false
