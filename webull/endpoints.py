@@ -36,6 +36,18 @@ class urls :
 
     def analysis(self, stock):
         return f'{self.base_securities_url}/securities/ticker/v5/analysis/{stock}'
+    
+    def analysis_shortinterest(self, stock):
+        return f'{self.base_securities_url}/securities/stock/{stock}/shortInterest'
+    
+    def analysis_institutional_holding(self, stock):
+        return f'{self.base_securities_url}/securities/stock/v5/{stock}/institutionalHolding'
+    
+    def analysis_etf_holding(self, stock, has_num, page_size):
+        return f'{self.base_securities_url}/securities/stock/v5/{stock}/belongEtf?hasNum={has_num}&pageSize={page_size}'
+    
+    def analysis_capital_flow(self, stock, show_hist):
+        return f'{self.base_securities_url}/wlas/capitalflow/ticker?tickerId={stock}&showHis={show_hist}'
 
     def bars(self, stock):
         return f'{self.base_quote_url}/quote/tickerChartDatas/v5/{stock}'
@@ -65,7 +77,7 @@ class urls :
         return f'{self.base_userbroker_url}/user/warning/v2/query/tickers'
 
     def login(self):
-        return f'{self.base_user_url}/passport/login/v3/account'
+        return f'{self.base_user_url}/passport/login/v5/account'
 
     def get_mfa(self) :
         return f'{self.base_userfintech_url}/passport/v2/verificationCode/send'
