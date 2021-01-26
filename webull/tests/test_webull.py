@@ -269,7 +269,7 @@ def test_get_trade_token(wb: webull, reqmock):
     assert resp == False
     assert wb._trade_token == ''
 
-    # [case 2] get_trade_token succeeds, password is incorrect
+    # [case 3] get_trade_token succeeds, password is correct
     reqmock.post(urls.trade_token(), text='''
         {
             "success": true, 
