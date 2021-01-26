@@ -851,6 +851,73 @@ class webull:
         '''
         headers = self.build_req_headers()
         return requests.get(self._urls.analysis(self.get_ticker(stock)), headers=headers).json()
+    
+    def get_capital_flow(self, stock=None, tId=None, show_hist=True):
+        '''
+        get capital flow
+        :param stock:
+        :param tId:
+        :param show_hist:
+        :return: list of capital flow
+        '''
+        headers = self.build_req_headers()
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+        return requests.get(self._urls.analysis_capital_flow(tId, show_hist), headers=headers).json()
+        
+    def get_etf_holding(self, stock=None, tId=None, has_num=0, count=50):
+        '''
+        get ETF holdings by stock
+        :param stock:
+        :param tId:
+        :param has_num:
+        :param count:
+        :return: list of ETF holdings
+        '''
+        headers = self.build_req_headers()
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+        return requests.get(self._urls.analysis_etf_holding(tId, has_num, count), headers=headers).json()
+    
+    def get_institutional_holding(self, stock=None, tId=None):
+        '''
+        get institutional holdings
+        :param stock:
+        :param tId:
+        :return: list of institutional holdings
+        '''
+        headers = self.build_req_headers()
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+        return requests.get(self._urls.analysis_institutional_holding(tId), headers=headers).json()
+    
+    def get_short_interest(self, stock=None, tId=None):
+        '''
+        get short interest
+        :param stock:
+        :param tId:
+        :return: list of short interest
+        '''
+        headers = self.build_req_headers()
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+        return requests.get(self._urls.analysis_shortinterest(tId), headers=headers).json()
 
     def get_financials(self, stock=None):
         '''
