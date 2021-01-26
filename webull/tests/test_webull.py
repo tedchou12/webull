@@ -245,14 +245,12 @@ def test_login(reqmock, wb):
     # [case 1] login fails, bad mobile username credentials
     reqmock.post(urls.login(), text='''
         {
-          "success": false,
-          "code": "phone.illegal"
+            "code": "phone.illegal"
         }
     ''')
 
     bad_mobile_username = '1112224444'
     resp = wb.login(username=bad_mobile_username, password='xxxxxxxx')
-    assert resp['success'] == False
     assert resp['code'] == 'phone.illegal'
 
     # [case 2] mobile login succeeds
@@ -260,21 +258,16 @@ def test_login(reqmock, wb):
     # this mock response only returns the fields which we are expecting
     reqmock.post(urls.login(), text='''
         {
-            "success":true,
-            "code":"200",
-            "data":{
-                "accessToken":"xxxxxxxxxx",
-                "uuid":"yyyyyyyyyy",
-                "refreshToken":"zzzzzzzzzz",
-                "tokenExpireTime":"2020-07 13T00:25:34.235+0000"
-            }
+            "accessToken":"xxxxxxxxxx",
+            "uuid":"yyyyyyyyyy",
+            "refreshToken":"zzzzzzzzzz",
+            "tokenExpireTime":"2020-07 13T00:25:34.235+0000"
         }
     ''')
     # mocking this to cover webull.login internal call to webull.get_account_id
     wb.get_account_id = MagicMock(return_value='11111111')
 
     resp = wb.login(username='1+1112223333', password='xxxxxxxx')
-    assert resp['success'] == True
     assert wb._access_token == 'xxxxxxxxxx'
     assert wb._refresh_token == 'zzzzzzzzzz'
     assert wb._token_expire == '2020-07 13T00:25:34.235+0000'
