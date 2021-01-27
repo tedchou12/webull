@@ -129,13 +129,13 @@ def test_get_portfolio():
 def test_get_positions():
     pass
 
-def test_get_quote(wb, reqmock):
+def test_get_quote(wb: webull, reqmock):
 
     # successful get_quote
     stock = 'AAPL'
     ticker = 913256135
     wb.get_ticker = MagicMock(return_value=ticker)
-    reqmock.get(urls.stock_id(stock), text='''
+    reqmock.get(urls.stock_id(stock, wb._region_code), text='''
         {
             "categoryId":0,
             "categoryName":"综合",
@@ -224,10 +224,6 @@ def test_get_ticker(wb, reqmock):
     ''')
     result = wb.get_ticker('SBUX')
     assert result == 913257472
-
-@pytest.mark.skip(reason="TODO")
-def test_get_quote():
-	pass
 
 @pytest.mark.skip(reason="TODO")
 def test_get_ticker():
