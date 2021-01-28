@@ -37,9 +37,32 @@ def wb():
 def test_alerts_add():
 	pass
 
-@pytest.mark.skip(reason="TODO")
-def test_alerts_list():
-	pass
+def test_alerts_list(wb: webull, reqmock):
+    # [case 1] unsuccessful alerts_list
+    reqmock.get(urls.list_alerts(), text='''
+        {
+            "success": false
+        }
+    ''')
+
+    result = wb.alerts_list()
+    assert result is None
+
+    # [case 2] successful alerts_list
+    reqmock.get(urls.list_alerts(), text='''
+        {
+            "success": true,
+            "data": [
+                {
+                    "tickerId": 913257472,
+                    "tickerSymbol": "SBUX"
+                }
+            ]
+        }
+    ''')
+
+    result = wb.alerts_list()
+    assert result is not None
 
 @pytest.mark.skip(reason="TODO")
 def test_alerts_remove():
