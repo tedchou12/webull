@@ -233,9 +233,26 @@ def test_get_quote():
 def test_get_ticker():
 	pass
 
-@pytest.mark.skip(reason="TODO")
-def test_get_tradable():
-	pass
+def test_get_tradable(wb: webull, reqmock):
+	# [case 1] get_tradable returns any json object
+    stock = 'SBUX'
+    reqmock.get(urls.stock_id(stock, wb._region_code), text='''
+        {
+            "data": [{
+                "tickerId": 913257472,
+                "symbol": "SBUX"
+            }]
+        }
+    ''')
+
+    reqmock.get(urls.is_tradable("913257472"), text='''
+        {
+            "json": "object"
+        }
+    ''')
+
+    resp = wb.get_tradable(stock=stock)
+    assert resp is not None
 
 @pytest.mark.skip(reason="TODO")
 def test_get_trade_token():
