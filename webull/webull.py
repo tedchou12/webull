@@ -694,7 +694,7 @@ class webull:
         get if stock is tradable
         '''
         headers = self.build_req_headers()
-        response = requests.get(self._urls.is_tradable(self.get_ticker(stock), headers=headers))
+        response = requests.get(self._urls.is_tradable(self.get_ticker(stock)), headers=headers)
         return response.json()
 
     def alerts_list(self):
