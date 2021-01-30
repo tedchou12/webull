@@ -705,7 +705,10 @@ class webull:
 
         response = requests.get(self._urls.list_alerts(), headers=headers)
         result = response.json()
-        return result.get('data', [])
+        if 'data' in result:
+            return result.get('data', [])
+        else:
+            return None
 
     def alerts_remove(self, alert=None, priceAlert=True, smartAlert=True):
         '''
