@@ -136,7 +136,7 @@ class webull:
         data = {'account': str(username),
                 'accountType': str(accountType),
                 'codeType': int(5)}
-        
+
         response = requests.post(self._urls.get_mfa(), json=data, headers=self._headers)
 
     def login_prompt(self):
@@ -792,19 +792,20 @@ class webull:
         if response.status_code != 200:
             raise Exception('alerts_add failed', response.status_code, response.reason)
         return True
+        
+    def active_gainer_loser(self, direction='gainer', rank_type='afterMarket', count=50) :
+          '''
+          gets gainer / loser / active stocks sorted by change
+          direction: gainer / loser / active
+          rank_type: preMarket / afterMarket / 5min / 1d / 5d / 1m / 3m / 52w (gainer/loser)
+                     volume / turnoverRatio / range (active)
+          '''
+          headers = self.build_req_headers()
 
-    def get_active_gainer_loser(self, direction='gainer', count=20):
-        '''
-        gets active / gainer / loser stocks sorted by change
-        direction: active / gainer / loser
-        '''
-        headers = self.build_req_headers()
+          response = requests.get(self._urls.active_gainers_losers(direction, self._region_code, rank_type, count), headers=headers)
+          result = response.json()
 
-        params = {'regionId': self._region_code, 'userRegionId': self._region_code, 'pageSize': count}
-        response = requests.get(self._urls.active_gainers_losers(direction), params=params, headers=headers)
-        result = response.json()
-        result = sorted(result, key=lambda k: k['change'], reverse=True)
-        return result
+          return result
 
     def run_screener(self, region=None, price_lte=None, price_gte=None, pct_chg_gte=None, pct_chg_lte=None, sort=None,
                      sort_dir=None, vol_lte=None, vol_gte=None):

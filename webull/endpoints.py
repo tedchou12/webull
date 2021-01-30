@@ -22,14 +22,14 @@ class urls :
     def account_activities(self, account_id):
         return f'{self.base_ustrade_url}/trade/v2/funds/{account_id}/activities'
 
-    def active_gainers_losers(self, direction):
-        if direction == 'gainer':
-            url = 'advanced'
-        elif direction == 'loser':
-            url = 'declined'
-        else:
-            url = 'active'
-        return f'{self.base_securities_url}/securities/market/v5/card/stockActivityPc.{url}/list'
+    def active_gainers_losers(self, direction, region_code, rank_type, num) :
+          if direction == 'gainer' :
+              url = 'topGainers'
+          elif direction == 'loser' :
+              url = 'dropGainers'
+          else :
+              url = 'topActive'
+          return f'{self.base_fintech_gw_url}/wlas/ranking/{url}?regionId={region_code}&rankType={rank_type}&pageIndex=1&pageSize={num}'
 
     def add_alert(self):
         return f'{self.base_userbroker_url}/user/warning/v2/manage/overlap'
