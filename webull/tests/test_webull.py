@@ -203,11 +203,11 @@ def test_get_quote(wb: webull, reqmock):
     with pytest.raises(ValueError) as e:
         wb.get_quote(bad_stock_symbol)
 
-def test_get_ticker(wb, reqmock):
+def test_get_ticker(wb: webull, reqmock):
 
     # failed get_ticker, stock doesn't exist
     bad_stock_symbol = '__YOLOSWAG__'
-    reqmock.get(urls.stock_id(bad_stock_symbol), text='''
+    reqmock.get(urls.stock_id(bad_stock_symbol, wb._region_code), text='''
         { "hasMore": false }
     ''')
     with pytest.raises(ValueError) as e:
@@ -221,28 +221,30 @@ def test_get_ticker(wb, reqmock):
 
     # successful get_ticker
     good_stock_symbol = 'SBUX'
-    reqmock.get(urls.stock_id(good_stock_symbol), text='''
+    reqmock.get(urls.stock_id(good_stock_symbol, wb._region_code), text='''
         {
-            "categoryId":0,
-            "categoryName":"综合",
-            "hasMore":true,
-            "list":[{
-                "tickerId":913257472,
-                "exchangeId":96,
-                "type":2,
-                "secType":[61],
-                "regionId":6,
-                "regionCode":"US",
-                "currencyId":247,
-                "name":"Starbucks",
-                "symbol":"SBUX",
-                "disSymbol":"SBUX",
-                "disExchangeCode":"NASDAQ",
-                "exchangeCode":"NSQ",
-                "listStatus":1,
-                "template":"stock",
-                "derivativeSupport":1
-            }]
+            "data":[
+                {
+                    "tickerId":913257472,
+                    "exchangeId":96,
+                    "type":2,
+                    "secType":[61],
+                    "regionId":6,
+                    "regionCode":"US",
+                    "currencyId":247,
+                    "currencyCode":"USD",
+                    "name":"Starbucks",
+                    "symbol":"SBUX",
+                    "disSymbol":"SBUX",
+                    "disExchangeCode":"NASDAQ",
+                    "exchangeCode":"NSQ",
+                    "listStatus":1,
+                    "template":"stock",
+                    "derivativeSupport":1,
+                    "tinyName":"Starbucks"
+                }
+            ],
+            "hasMore":false
         }
     ''')
     result = wb.get_ticker('SBUX')
