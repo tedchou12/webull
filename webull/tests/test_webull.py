@@ -37,9 +37,32 @@ def wb():
 def test_alerts_add():
 	pass
 
-@pytest.mark.skip(reason="TODO")
-def test_alerts_list():
-	pass
+def test_alerts_list(wb: webull, reqmock):
+    # [case 1] unsuccessful alerts_list
+    reqmock.get(urls.list_alerts(), text='''
+        {
+            "success": false
+        }
+    ''')
+
+    result = wb.alerts_list()
+    assert result is None
+
+    # [case 2] successful alerts_list
+    reqmock.get(urls.list_alerts(), text='''
+        {
+            "success": true,
+            "data": [
+                {
+                    "tickerId": 913257472,
+                    "tickerSymbol": "SBUX"
+                }
+            ]
+        }
+    ''')
+
+    result = wb.alerts_list()
+    assert result is not None
 
 @pytest.mark.skip(reason="TODO")
 def test_alerts_remove():
@@ -129,13 +152,13 @@ def test_get_portfolio():
 def test_get_positions():
     pass
 
-def test_get_quote(wb, reqmock):
+def test_get_quote(wb: webull, reqmock):
 
     # successful get_quote
     stock = 'AAPL'
     ticker = 913256135
     wb.get_ticker = MagicMock(return_value=ticker)
-    reqmock.get(urls.stock_id(stock), text='''
+    reqmock.get(urls.stock_id(stock, wb._region_code), text='''
         {
             "categoryId":0,
             "categoryName":"综合",
@@ -226,20 +249,77 @@ def test_get_ticker(wb, reqmock):
     assert result == 913257472
 
 @pytest.mark.skip(reason="TODO")
-def test_get_quote():
-	pass
-
-@pytest.mark.skip(reason="TODO")
 def test_get_ticker():
 	pass
 
-@pytest.mark.skip(reason="TODO")
-def test_get_tradable():
-	pass
+def test_get_tradable(wb: webull, reqmock):
+	# [case 1] get_tradable returns any json object
+    stock = 'SBUX'
+    reqmock.get(urls.stock_id(stock, wb._region_code), text='''
+        {
+            "data": [{
+                "tickerId": 913257472,
+                "symbol": "SBUX"
+            }]
+        }
+    ''')
 
-@pytest.mark.skip(reason="TODO")
-def test_get_trade_token():
-	pass
+    reqmock.get(urls.is_tradable("913257472"), text='''
+        {
+            "json": "object"
+        }
+    ''')
+
+    resp = wb.get_tradable(stock=stock)
+    assert resp is not None
+
+def test_get_trade_token(wb: webull, reqmock):
+    # [case 1] get_trade_token fails, access token is expired
+    reqmock.post(urls.trade_token(), text='''
+        {
+            "msg": "AccessToken is expire",
+            "traceId": "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "code": "auth.token.expire",
+            "success": false
+        }
+    ''')
+
+    any_password = '123456'
+    resp = wb.get_trade_token(any_password)
+    assert resp == False
+    assert wb._trade_token == ''
+
+    # [case 2] get_trade_token fails, password is incorrect
+    reqmock.post(urls.trade_token(), text='''
+        {
+            "msg":"'Inner server error", 
+            "traceId": "xxxxxxxxxxxxxxxxxxxxxxxxxx", 
+            "code": "trade.pwd.invalid", 
+            "data": { "fail": 1.0, "retry": 4.0 }, 
+            "success": false
+        }
+    ''')
+
+    bad_password = '123456'
+    resp = wb.get_trade_token(bad_password)
+    assert resp == False
+    assert wb._trade_token == ''
+
+    # [case 3] get_trade_token succeeds, password is correct
+    reqmock.post(urls.trade_token(), text='''
+        {
+            "success": true, 
+            "data": {
+                "tradeToken": "xxxxxxxxxx",
+                "tradeTokenExpireIn": 28800000
+            }
+        }
+    ''')
+
+    good_password = '123456'
+    resp = wb.get_trade_token(good_password)
+    assert resp == True
+    assert wb._trade_token == 'xxxxxxxxxx'
 
 def test_login(reqmock, wb):
     # [case 1] login fails, bad mobile username credentials
