@@ -12,7 +12,6 @@ class urls :
         self.base_userfintech_url = 'https://userapi.webullbroker.com/api'
         self.base_ustrade_url = 'https://ustrade.webullfinance.com/api'
         self.base_paperfintech_url = 'https://act.webullfintech.com/webull-paper-center/api'
-        self.base_fintech_gw_url = 'https://quotes-gw.webullfintech.com/api'
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v2/home/{account_id}'
@@ -23,14 +22,14 @@ class urls :
     def account_activities(self, account_id):
         return f'{self.base_ustrade_url}/trade/v2/funds/{account_id}/activities'
 
-    def active_gainers_losers(self, direction, region_code, rank_type, num) :
-          if direction == 'gainer' :
-              url = 'topGainers'
-          elif direction == 'loser' :
-              url = 'dropGainers'
-          else :
-              url = 'topActive'
-          return f'{self.base_fintech_gw_url}/wlas/ranking/{url}?regionId={region_code}&rankType={rank_type}&pageIndex=1&pageSize={num}'
+    def active_gainers_losers(self, direction):
+        if direction == 'gainer':
+            url = 'advanced'
+        elif direction == 'loser':
+            url = 'declined'
+        else:
+            url = 'active'
+        return f'{self.base_securities_url}/securities/market/v5/card/stockActivityPc.{url}/list'
 
     def add_alert(self):
         return f'{self.base_userbroker_url}/user/warning/v2/manage/overlap'
