@@ -12,6 +12,7 @@ class urls :
         self.base_userfintech_url = 'https://userapi.webullbroker.com/api'
         self.base_ustrade_url = 'https://ustrade.webullfinance.com/api'
         self.base_paperfintech_url = 'https://act.webullfintech.com/webull-paper-center/api'
+        self.base_fintech_gw_url = 'https://quotes-gw.webullfintech.com/api'
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v2/home/{account_id}'
