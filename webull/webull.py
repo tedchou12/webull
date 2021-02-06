@@ -144,9 +144,12 @@ class webull:
                 'codeType': int(5)}
 
         response = requests.post(self._urls.get_mfa(), json=data, headers=self._headers)
-        data = response.json()
-
-        return data
+        # data = response.json()
+        
+        if response.status_code == 200 :
+            return True
+        else :
+            return False
 
     def check_mfa(self, username='', mfa='') :
         try:
