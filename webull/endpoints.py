@@ -9,10 +9,11 @@ class urls :
         self.base_trade_url = 'https://tradeapi.webullbroker.com/api/trade'
         self.base_user_url = 'https://userapi.webull.com/api'
         self.base_userbroker_url = 'https://userapi.webullbroker.com/api'
-        self.base_userfintech_url = 'https://userapi.webullbroker.com/api'
         self.base_ustrade_url = 'https://ustrade.webullfinance.com/api'
         self.base_paperfintech_url = 'https://act.webullfintech.com/webull-paper-center/api'
         self.base_fintech_gw_url = 'https://quotes-gw.webullfintech.com/api'
+        self.base_userfintech_url = 'https://userapi.webullfintech.com/api'
+
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v2/home/{account_id}'
@@ -37,16 +38,16 @@ class urls :
 
     def analysis(self, stock):
         return f'{self.base_securities_url}/securities/ticker/v5/analysis/{stock}'
-    
+
     def analysis_shortinterest(self, stock):
         return f'{self.base_securities_url}/securities/stock/{stock}/shortInterest'
-    
+
     def analysis_institutional_holding(self, stock):
         return f'{self.base_securities_url}/securities/stock/v5/{stock}/institutionalHolding'
-    
+
     def analysis_etf_holding(self, stock, has_num, page_size):
         return f'{self.base_securities_url}/securities/stock/v5/{stock}/belongEtf?hasNum={has_num}&pageSize={page_size}'
-    
+
     def analysis_capital_flow(self, stock, show_hist):
         return f'{self.base_securities_url}/wlas/capitalflow/ticker?tickerId={stock}&showHis={show_hist}'
 
@@ -81,7 +82,16 @@ class urls :
         return f'{self.base_user_url}/passport/login/v5/account'
 
     def get_mfa(self) :
-        return f'{self.base_userfintech_url}/passport/v2/verificationCode/send'
+        return f'{self.base_userbroker_url}/passport/v2/verificationCode/send'
+
+    def check_mfa(self) :
+        return f'{self.base_userfintech_url}/passport/v2/verificationCode/checkCode'
+
+    def get_security(self, username, account_type, region_code, event) :
+        return f'{self.base_userfintech_url}/user/risk/getPrivacyQuestion?account={username}&accountType={account_type}&regionId={region_code}&event={event}'
+
+    def check_security(self) :
+        return f'{self.base_userfintech_url}/user/risk/checkAnswer'
 
     def logout(self):
         return f'{self.base_userbroker_url}/passport/login/logout'

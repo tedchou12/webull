@@ -8,6 +8,7 @@ import pickle
 import requests
 import time
 import uuid
+import urllib.parse
 
 from datetime import datetime, timedelta
 from email_validator import validate_email, EmailNotValidError
@@ -77,7 +78,7 @@ class webull:
         return headers
 
 
-    def login(self, username='', password='', device_name='', mfa=''):
+    def login(self, username='', password='', device_name='', mfa='', question_id='', question_answer=''):
         '''
         Login with email or phone number
 
@@ -103,6 +104,7 @@ class webull:
             device_name = 'default_string'
 
         data = {
+            'accessQuestions': '[{"questionId":"' + str(question_id) + '", "answer":"' + str(question_answer) + '"}]',
             'account': username,
             'accountType': accountType,
             'deviceId': self._did,
@@ -130,7 +132,7 @@ class webull:
             self._account_id = self.get_account_id()
         return result
 
-    def get_mfa(self, username):
+    def get_mfa(self, username='') :
         try:
           validate_email(username)
           accountType = 2 # email
@@ -142,6 +144,60 @@ class webull:
                 'codeType': int(5)}
 
         response = requests.post(self._urls.get_mfa(), json=data, headers=self._headers)
+        # data = response.json()
+        
+        if response.status_code == 200 :
+            return True
+        else :
+            return False
+
+    def check_mfa(self, username='', mfa='') :
+        try:
+          validate_email(username)
+          accountType = 2 # email
+        except EmailNotValidError as _e:
+          accountType = 1 # phone
+
+        data = {'account': str(username),
+                'accountType': str(accountType),
+                'code': str(mfa),
+                'codeType': int(5)}
+
+        response = requests.post(self._urls.check_mfa(), json=data, headers=self._headers)
+        data = response.json()
+
+        return data
+
+    def get_security(self, username='') :
+        try:
+          validate_email(username)
+          accountType = 2 # email
+        except EmailNotValidError as _e:
+          accountType = 1 # phone
+
+        username = urllib.parse.quote(username)
+
+        response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN'), headers=self._headers)
+        data = response.json()
+
+        return data
+
+    def check_security(self, username='', question_id='', question_answer='') :
+        try:
+          validate_email(username)
+          accountType = 2 # email
+        except EmailNotValidError as _e:
+          accountType = 1 # phone
+
+        data = {'account': str(username),
+                'accountType': str(accountType),
+                'answerList': [{'questionId': str(question_id), 'answer': str(question_answer)}],
+                'event': 'PRODUCT_LOGIN'}
+
+        response = requests.post(self._urls.check_security(), json=data, headers=self._headers)
+        data = response.json()
+
+        return data
 
     def login_prompt(self):
         '''
@@ -799,7 +855,7 @@ class webull:
         if response.status_code != 200:
             raise Exception('alerts_add failed', response.status_code, response.reason)
         return True
-        
+
     def active_gainer_loser(self, direction='gainer', rank_type='afterMarket', count=50) :
           '''
           gets gainer / loser / active stocks sorted by change
@@ -858,7 +914,7 @@ class webull:
         '''
         headers = self.build_req_headers()
         return requests.get(self._urls.analysis(self.get_ticker(stock)), headers=headers).json()
-    
+
     def get_capital_flow(self, stock=None, tId=None, show_hist=True):
         '''
         get capital flow
@@ -875,7 +931,7 @@ class webull:
         else:
             raise ValueError('Must provide a stock symbol or a stock id')
         return requests.get(self._urls.analysis_capital_flow(tId, show_hist), headers=headers).json()
-        
+
     def get_etf_holding(self, stock=None, tId=None, has_num=0, count=50):
         '''
         get ETF holdings by stock
@@ -893,7 +949,7 @@ class webull:
         else:
             raise ValueError('Must provide a stock symbol or a stock id')
         return requests.get(self._urls.analysis_etf_holding(tId, has_num, count), headers=headers).json()
-    
+
     def get_institutional_holding(self, stock=None, tId=None):
         '''
         get institutional holdings
@@ -909,7 +965,7 @@ class webull:
         else:
             raise ValueError('Must provide a stock symbol or a stock id')
         return requests.get(self._urls.analysis_institutional_holding(tId), headers=headers).json()
-    
+
     def get_short_interest(self, stock=None, tId=None):
         '''
         get short interest
