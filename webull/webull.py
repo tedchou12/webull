@@ -104,7 +104,6 @@ class webull:
             device_name = 'default_string'
 
         data = {
-            'accessQuestions': '[{"questionId":"' + str(question_id) + '", "answer":"' + str(question_answer) + '"}]',
             'account': username,
             'accountType': accountType,
             'deviceId': self._did,
@@ -122,6 +121,10 @@ class webull:
             headers = self.build_req_headers()
         else :
             headers = self._headers
+
+        if question_id != '' and question_answer != '' :
+            data['accessQuestions'] = '[{"questionId":"' + str(question_id) + '", "answer":"' + str(question_answer) + '"}]'
+
         response = requests.post(self._urls.login(), json=data, headers=headers)
         result = response.json()
         if 'accessToken' in result :
@@ -145,7 +148,7 @@ class webull:
 
         response = requests.post(self._urls.get_mfa(), json=data, headers=self._headers)
         # data = response.json()
-        
+
         if response.status_code == 200 :
             return True
         else :
@@ -176,8 +179,8 @@ class webull:
           accountType = 1 # phone
 
         username = urllib.parse.quote(username)
-
-        response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN'), headers=self._headers)
+        time = datetime.now().timestamp() * 1000
+        response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN', time), headers=self._headers)
         data = response.json()
 
         return data
