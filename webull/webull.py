@@ -1146,7 +1146,7 @@ class paper_webull(webull):
         headers = self.build_req_headers()
         response = requests.get(self._urls.paper_account_id(), headers=headers)
         result = response.json()
-        if result is not None and 0 in result:
+        if result is not None and len(result) > 0 and 'id' in result[0]:
             id = result[0]['id']
             self._account_id = id
             return id
