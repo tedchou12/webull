@@ -145,7 +145,7 @@ class webull:
 
         response = requests.post(self._urls.get_mfa(), json=data, headers=self._headers)
         # data = response.json()
-        
+
         if response.status_code == 200 :
             return True
         else :
@@ -177,8 +177,14 @@ class webull:
 
         username = urllib.parse.quote(username)
 
-        response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN'), headers=self._headers)
+        # seems like webull has a bug/stability issue here:
+        time = datetime.now().timestamp() * 1000
+        response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN', time, 0), headers=self._headers)
         data = response.json()
+
+        if len(data) == 0 :
+            response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN', time, 1), headers=self._headers)
+            data = response.json()
 
         return data
 
