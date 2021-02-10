@@ -123,7 +123,7 @@ class urls :
         return f'{self.base_paperfintech_url}/paper/1/acc/{paper_account_id}'
 
     def paper_account_id(self):
-        return f'{self.base_paper_url}/myaccounts/true'
+        return f'{self.base_paperfintech_url}/myaccounts/true'
 
     def paper_cancel_order(self, paper_account_id, order_id):
         return f'{self.base_paper_url}/paper/1/acc/{paper_account_id}/orderop/cancel/{order_id}'
