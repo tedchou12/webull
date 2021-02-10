@@ -179,9 +179,14 @@ class webull:
           accountType = 1 # phone
 
         username = urllib.parse.quote(username)
+        
+        # seems like webull has a bug/stability issue here:
         time = datetime.now().timestamp() * 1000
-        response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN', time), headers=self._headers)
+        response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN', time, 0), headers=self._headers)
         data = response.json()
+        if len(data) == 0 :
+            response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN', time, 1), headers=self._headers)
+            data = response.json()
 
         return data
 
