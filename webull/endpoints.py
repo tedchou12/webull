@@ -87,8 +87,13 @@ class urls :
     def check_mfa(self) :
         return f'{self.base_userfintech_url}/passport/v2/verificationCode/checkCode'
 
-    def get_security(self, username, account_type, region_code, event, time) :
-        return f'{self.base_userfintech_url}/user/risk/getSecurityQuestion?account={username}&accountType={account_type}&regionId={region_code}&event={event}&v={time}'
+    def get_security(self, username, account_type, region_code, event, time, url=0) :
+        if url == 1 :
+            url = 'getPrivacyQuestion'
+        else :
+            url = 'getSecurityQuestion'
+
+        return f'{self.base_userfintech_url}/user/risk/{url}?account={username}&accountType={account_type}&regionId={region_code}&event={event}&v={time}'
 
     def check_security(self) :
         return f'{self.base_userfintech_url}/user/risk/checkAnswer'
