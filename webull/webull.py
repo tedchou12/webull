@@ -190,6 +190,25 @@ class webull:
 
         return data
 
+    def next_security(self, username='') :
+        try:
+          validate_email(username)
+          accountType = 2 # email
+        except EmailNotValidError as _e:
+          accountType = 1 # phone
+
+        username = urllib.parse.quote(username)
+        
+        # seems like webull has a bug/stability issue here:
+        time = datetime.now().timestamp() * 1000
+        response = requests.get(self._urls.next_security(username, accountType, self._region_code, 'PRODUCT_LOGIN', time, 0), headers=self._headers)
+        data = response.json()
+        if len(data) == 0 :
+            response = requests.get(self._urls.next_security(username, accountType, self._region_code, 'PRODUCT_LOGIN', time, 1), headers=self._headers)
+            data = response.json()
+
+        return data
+
     def check_security(self, username='', question_id='', question_answer='') :
         try:
           validate_email(username)

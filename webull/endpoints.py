@@ -82,12 +82,12 @@ class urls :
         return f'{self.base_user_url}/passport/login/v5/account'
 
     def get_mfa(self) :
-        return f'{self.base_userbroker_url}/passport/v2/verificationCode/send'
+        return f'{self.base_userfintech_url}/passport/v2/verificationCode/send'
 
     def check_mfa(self) :
         return f'{self.base_userfintech_url}/passport/v2/verificationCode/checkCode'
 
-    def get_security(self, username, account_type, region_code, event, time, url=0) :
+	def get_security(self, username, account_type, region_code, event, time, url=0) :
         if url == 1 :
             url = 'getPrivacyQuestion'
         else :
@@ -95,7 +95,16 @@ class urls :
 
         return f'{self.base_userfintech_url}/user/risk/{url}?account={username}&accountType={account_type}&regionId={region_code}&event={event}&v={time}'
 
-    def check_security(self) :
+    def next_security(self, username, account_type, region_code, event) :
+		    def get_security(self, username, account_type, region_code, event, time, url=0) :
+        if url == 1 :
+            url = 'nextPrivacyQuestion'
+        else :
+            url = 'nextSecurityQuestion'
+
+        return f'{self.base_userfintech_url}/user/risk/{url}?account={username}&accountType={account_type}&regionId={region_code}&event={event}&v={time}'
+		
+	def check_security(self) :
         return f'{self.base_userfintech_url}/user/risk/checkAnswer'
 
     def logout(self):
