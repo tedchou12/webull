@@ -111,7 +111,7 @@ class webull:
 
         data = {
             'account': username,
-            'accountType': account_type,
+            'accountType': str(account_type),
             'deviceId': self._did,
             'deviceName': device_name,
             'grade': 1,
