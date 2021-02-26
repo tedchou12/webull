@@ -63,7 +63,6 @@ class webull:
             pickle.dump(did, open(filename, 'wb'))
         return did
 
-
     def build_req_headers(self, include_trade_token=False, include_time=False):
         '''
         Build default set of header params
@@ -1046,6 +1045,39 @@ class webull:
             df.loc[to_datetime(datetime.fromtimestamp(int(row[0])).astimezone(time_zone))] = data
         return df.iloc[::-1]
 
+    def get_options_bars(self, derivativeId=None, interval='1m', count=1, timeStamp=None):
+        '''
+        get bars returns a pandas dataframe
+        params:
+            interval:1m, 5m, 30m, 60m, 1d
+            count: number of bars to return
+            timeStamp: If epoc timestamp is provided, return bar count up to timestamp. If not set default to current time.
+        '''
+        headers = self.build_req_headers()
+        if derivativeId is None:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
+        params = {'type': interval, 'count': count, 'timestamp': timeStamp}
+        df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
+        df.index.name = 'timestamp'
+        response = requests.get(self._urls.options_bars(derivativeId), params=params, headers=headers)
+        result = response.json()
+        time_zone = timezone(result[0]['timeZone'])
+        for row in result[0]['data']:
+            row = row.split(',')
+            row = ['0' if value == 'null' else value for value in row]
+            data = {
+                'open': float(row[1]),
+                'high': float(row[3]),
+                'low': float(row[4]),
+                'close': float(row[2]),
+                'volume': float(row[6]),
+                'vwap': float(row[7])
+            }
+            #convert to a panda datetime64 which has extra features like floor and resample
+            df.loc[to_datetime(datetime.fromtimestamp(int(row[0])).astimezone(time_zone))] = data
+        return df.iloc[::-1]
+
     def get_calendar(self,stock=None, tId=None):
         '''
         There doesn't seem to be a way to get the times the market is open outside of the charts.
@@ -1249,7 +1281,6 @@ class paper_webull(webull):
         response = requests.get(self._urls.social_home(topic, num), headers=headers)
         result = response.json()
         return result
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Interface with Webull. Paper trading is not the default.')
