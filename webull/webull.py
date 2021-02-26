@@ -1055,7 +1055,7 @@ class webull:
         '''
         headers = self.build_req_headers()
         if derivativeId is None:
-            raise ValueError('Must provide a stock symbol or a stock id')
+            raise ValueError('Must provide derivative ID')
 
         params = {'type': interval, 'count': count, 'timestamp': timeStamp}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
