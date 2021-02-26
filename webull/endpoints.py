@@ -13,6 +13,8 @@ class urls :
         self.base_paperfintech_url = 'https://act.webullfintech.com/webull-paper-center/api'
         self.base_fintech_gw_url = 'https://quotes-gw.webullfintech.com/api'
         self.base_userfintech_url = 'https://userapi.webullfintech.com/api'
+        self.base_new_trade_url = 'https://trade.webullfintech.com/api'
+
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v3/home/{account_id}'
@@ -172,7 +174,7 @@ class urls :
         return f'{self.base_options_gw_url}/search/pc/tickers?keyword={stock}&pageIndex=1&pageSize=20&regionId={region_code}'
 
     def trade_token(self):
-        return f'{self.base_trade_url}/login'
+        return f'{self.base_new_trade_url}/trading/v1/global/trade/login'
 
     def user(self):
         return f'{self.base_user_url}/user'
