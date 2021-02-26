@@ -345,8 +345,8 @@ class webull:
 
         response = requests.post(self._urls.trade_token(), json=data, headers=headers)
         result = response.json()
-        if result['success']:
-            self._trade_token = result['data']['tradeToken']
+        if 'tradeToken' in result :
+            self._trade_token = result['tradeToken']
             return True
         else:
             return False
@@ -403,7 +403,7 @@ class webull:
         Place an order
 
         price: float (LMT / STP LMT Only)
-        action: BUY / SELL
+        action: BUY / SELL / SHORT
         ordertype : LMT / MKT / STP / STP LMT / STP TRAIL
         timeinforce:  GTC / DAY / IOC
         outsideRegularTradingHour: True / False
@@ -421,6 +421,7 @@ class webull:
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
         data = {
             'action': action,
+            'comboType': 'NORMAL',
             'orderType': orderType,
             'outsideRegularTradingHour': outsideRegularTradingHour,
             'quantity': int(quant),
