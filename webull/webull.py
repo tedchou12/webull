@@ -27,19 +27,27 @@ class webull:
             'Accept-Encoding': 'gzip, deflate',
             'Content-Type': 'application/json',
             'platform': 'web',
-            'ver': '3.21.14',
+            'ver': '3.22.20',
             'User-Agent': '*',
+            'lzone': 'dc_core_r001',
             'did': self._get_did(),
         }
-        self._access_token = ''
+
+        #endpoints
+        self._urls = endpoints.urls()
+
+        #sessions
         self._account_id = ''
+        self._trade_token = ''
+        self._access_token = ''
         self._refresh_token = ''
         self._token_expire = ''
-        self._trade_token = ''
         self._uuid = ''
-        self._region_code = 6
+
+        #miscellaenous
         self._did = self._get_did()
-        self._urls = endpoints.urls()
+        self._region_code = 6
+        self.zone_var = 'dc_core_r001'
 
     def _get_did(self, path=''):
         '''
@@ -64,17 +72,19 @@ class webull:
         return did
 
 
-    def build_req_headers(self, include_trade_token=False, include_time=False):
+    def build_req_headers(self, include_trade_token=False, include_time=False, include_zone_var=True):
         '''
         Build default set of header params
         '''
         headers = self._headers
         headers['did'] = self._did
         headers['access_token'] = self._access_token
-        if include_trade_token:
+        if include_trade_token :
             headers['t_token'] = self._trade_token
-        if include_time:
+        if include_time :
             headers['t_time'] = str(round(time.time() * 1000))
+        if include_zone_var :
+            headers['lzone'] = self.zone_var
         return headers
 
 
@@ -94,18 +104,14 @@ class webull:
         password = ('wl_app-a&b@!423^' + password).encode('utf-8')
         md5_hash = hashlib.md5(password)
 
-        try:
-          validate_email(username)
-          accountType = 2 # email
-        except EmailNotValidError as _e:
-          accountType = 1 # phone
+        account_type = self.get_account_type(username)
 
         if device_name == '' :
             device_name = 'default_string'
 
         data = {
             'account': username,
-            'accountType': accountType,
+            'accountType': str(account_type),
             'deviceId': self._did,
             'deviceName': device_name,
             'grade': 1,
@@ -136,14 +142,10 @@ class webull:
         return result
 
     def get_mfa(self, username='') :
-        try:
-          validate_email(username)
-          accountType = 2 # email
-        except EmailNotValidError as _e:
-          accountType = 1 # phone
+        account_type = self.get_account_type()
 
         data = {'account': str(username),
-                'accountType': str(accountType),
+                'accountType': str(account_type),
                 'codeType': int(5)}
 
         response = requests.post(self._urls.get_mfa(), json=data, headers=self._headers)
@@ -155,14 +157,10 @@ class webull:
             return False
 
     def check_mfa(self, username='', mfa='') :
-        try:
-          validate_email(username)
-          accountType = 2 # email
-        except EmailNotValidError as _e:
-          accountType = 1 # phone
+        account_type = self.get_account_type(username)
 
         data = {'account': str(username),
-                'accountType': str(accountType),
+                'accountType': str(account_type),
                 'code': str(mfa),
                 'codeType': int(5)}
 
@@ -172,33 +170,39 @@ class webull:
         return data
 
     def get_security(self, username='') :
-        try:
-          validate_email(username)
-          accountType = 2 # email
-        except EmailNotValidError as _e:
-          accountType = 1 # phone
-
+        account_type = self.get_account_type(username)
         username = urllib.parse.quote(username)
-        
+
         # seems like webull has a bug/stability issue here:
         time = datetime.now().timestamp() * 1000
-        response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN', time, 0), headers=self._headers)
+        response = requests.get(self._urls.get_security(username, account_type, self._region_code, 'PRODUCT_LOGIN', time, 0), headers=self._headers)
         data = response.json()
         if len(data) == 0 :
-            response = requests.get(self._urls.get_security(username, accountType, self._region_code, 'PRODUCT_LOGIN', time, 1), headers=self._headers)
+            response = requests.get(self._urls.get_security(username, account_type, self._region_code, 'PRODUCT_LOGIN', time, 1), headers=self._headers)
+            data = response.json()
+
+        return data
+
+    def next_security(self, username='') :
+        account_type = self.get_account_type(username)
+        username = urllib.parse.quote(username)
+
+        # seems like webull has a bug/stability issue here:
+        time = datetime.now().timestamp() * 1000
+        response = requests.get(self._urls.next_security(username, account_type, self._region_code, 'PRODUCT_LOGIN', time, 0), headers=self._headers)
+        data = response.json()
+        if len(data) == 0 :
+            response = requests.get(self._urls.next_security(username, account_type, self._region_code, 'PRODUCT_LOGIN', time, 1), headers=self._headers)
+            print(response)
             data = response.json()
 
         return data
 
     def check_security(self, username='', question_id='', question_answer='') :
-        try:
-          validate_email(username)
-          accountType = 2 # email
-        except EmailNotValidError as _e:
-          accountType = 1 # phone
+        account_type = self.get_account_type(username)
 
         data = {'account': str(username),
-                'accountType': str(accountType),
+                'accountType': str(account_type),
                 'answerList': [{'questionId': str(question_id), 'answer': str(question_answer)}],
                 'event': 'PRODUCT_LOGIN'}
 
@@ -267,7 +271,8 @@ class webull:
 
         response = requests.get(self._urls.account_id(), headers=headers)
         result = response.json()
-        if result['success']:
+        if result['success'] :
+            self.zone_var = str(result['data'][0]['rzone'])
             id = str(result['data'][0]['secAccountId'])
             self._account_id = id
             return id
@@ -1122,7 +1127,7 @@ class webull:
                     rank = data['data']
         return rank
 
-    def get_watchlists(self):
+    def get_watchlists(self) :
         """
         get user watchlists
         :return:
@@ -1132,7 +1137,14 @@ class webull:
         response = requests.get(self._urls.portfolio_lists(), params=params, headers=headers)
         return response.json()['portfolioList']
 
+    def get_account_type(self, username='') :
+        try:
+            validate_email(username)
+            account_type = 2 # email
+        except EmailNotValidError as _e:
+            account_type = 1 # phone
 
+        return account_type
 
 ''' Paper support '''
 class paper_webull(webull):

@@ -14,7 +14,6 @@ class urls :
         self.base_fintech_gw_url = 'https://quotes-gw.webullfintech.com/api'
         self.base_userfintech_url = 'https://userapi.webullfintech.com/api'
 
-
     def account(self, account_id):
         return f'{self.base_trade_url}/v3/home/{account_id}'
 
@@ -82,7 +81,7 @@ class urls :
         return f'{self.base_user_url}/passport/login/v5/account'
 
     def get_mfa(self) :
-        return f'{self.base_userbroker_url}/passport/v2/verificationCode/send'
+        return f'{self.base_userfintech_url}/passport/v2/verificationCode/send'
 
     def check_mfa(self) :
         return f'{self.base_userfintech_url}/passport/v2/verificationCode/checkCode'
@@ -92,6 +91,14 @@ class urls :
             url = 'getPrivacyQuestion'
         else :
             url = 'getSecurityQuestion'
+
+        return f'{self.base_userfintech_url}/user/risk/{url}?account={username}&accountType={account_type}&regionId={region_code}&event={event}&v={time}'
+
+    def next_security(self, username, account_type, region_code, event, time, url=0) :
+        if url == 1 :
+            url = 'nextPrivacyQuestion'
+        else :
+            url = 'nextSecurityQuestion'
 
         return f'{self.base_userfintech_url}/user/risk/{url}?account={username}&accountType={account_type}&regionId={region_code}&event={event}&v={time}'
 
@@ -138,10 +145,10 @@ class urls :
         return f'{self.base_ustrade_url}/trade/v2/option/placeOrder/{account_id}'
 
     def place_orders(self, account_id):
-        return f'{self.base_trade_url}/order/{account_id}/placeStockOrder'
+        return f'{self.base_ustrade_url}/trade/order/{account_id}/placeStockOrder'
 
     def modify_order(self, account_id, order_id):
-        return f'{self.base_trade_url}/order/{account_id}/modifyStockOrder/{order_id}'
+        return f'{self.base_trade_url}/trade/order/{account_id}/modifyStockOrder/{order_id}'
 
     def place_otoco_orders(self, account_id):
         return f'{self.base_trade_url}/v2/corder/stock/place/{account_id}'
