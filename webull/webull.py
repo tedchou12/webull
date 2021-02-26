@@ -1051,19 +1051,21 @@ class webull:
             df.loc[to_datetime(datetime.fromtimestamp(int(row[0])).astimezone(time_zone))] = data
         return df.iloc[::-1]
 
-    def get_options_bars(self, derivativeId=None, interval='1m', count=1, timeStamp=None):
+    def get_options_bars(self, derivativeId=None, interval='1m', count=1, direction=1, timeStamp=None):
         '''
         get bars returns a pandas dataframe
         params:
             interval:1m, 5m, 30m, 60m, 1d
             count: number of bars to return
+            direction: 1 ignores {count} parameter & returns all bars on and after timestamp
+                       setting any other value will ignore timestamp & return latest {count} bars
             timeStamp: If epoc timestamp is provided, return bar count up to timestamp. If not set default to current time.
         '''
         headers = self.build_req_headers()
         if derivativeId is None:
             raise ValueError('Must provide derivative ID')
 
-        params = {'type': interval, 'count': count, 'timestamp': timeStamp}
+        params = {'type': interval, 'count': count, 'direction': direction, 'timestamp': timeStamp}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
         response = requests.get(self._urls.options_bars(derivativeId), params=params, headers=headers)
