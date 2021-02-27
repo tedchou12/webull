@@ -121,7 +121,7 @@ class webull:
 
         if mfa != '' :
             data['extInfo'] = {
-                'codeAccountType': accountType,
+                'codeAccountType': account_type,
                 'verificationCode': mfa
             }
             headers = self.build_req_headers()
