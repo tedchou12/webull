@@ -1013,7 +1013,7 @@ class webull:
         params = {'currentNewsId': Id, 'pageSize': items}
         return requests.get(self._urls.news(self.get_ticker(stock)), params=params, headers=headers).json()
 
-    def get_bars(self, stock=None, tId = None, interval='m1', count=1, extendTrading=0, timeStamp=None):
+    def get_bars(self, stock=None, tId=None, interval='m1', count=1, extendTrading=0, timeStamp=None):
         '''
         get bars returns a pandas dataframe
         params:
@@ -1055,7 +1055,8 @@ class webull:
         '''
         get bars returns a pandas dataframe
         params:
-            interval:1m, 5m, 30m, 60m, 1d
+            derivativeId: to be obtained from option chain, eg option_chain[0]['call']['tickerId']
+            interval: 1m, 5m, 30m, 60m, 1d
             count: number of bars to return
             direction: 1 ignores {count} parameter & returns all bars on and after timestamp
                        setting any other value will ignore timestamp & return latest {count} bars
@@ -1063,7 +1064,7 @@ class webull:
         '''
         headers = self.build_req_headers()
         if derivativeId is None:
-            raise ValueError('Must provide derivative ID')
+            raise ValueError('Must provide a derivative ID')
 
         params = {'type': interval, 'count': count, 'direction': direction, 'timestamp': timeStamp}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
@@ -1071,7 +1072,7 @@ class webull:
         response = requests.get(self._urls.options_bars(derivativeId), params=params, headers=headers)
         result = response.json()
         time_zone = timezone(result[0]['timeZone'])
-        for row in result[0]['data']:
+        for row in result[0]['data'] :
             row = row.split(',')
             row = ['0' if value == 'null' else value for value in row]
             data = {
