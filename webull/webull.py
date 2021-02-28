@@ -321,7 +321,7 @@ class webull:
         data = self.get_account()
         return data['openOrders']
 
-    def get_history_orders(self, status='Cancelled', count=20):
+    def get_history_orders(self, status='All', count=20):
         '''
         Historical orders, can be cancelled or filled
         status = Cancelled / Filled / Working / Partially Filled / Pending / Failed / All
