@@ -270,7 +270,7 @@ class webull:
 
         response = requests.get(self._urls.account_id(), headers=headers)
         result = response.json()
-        if result['success'] :
+        if result['success'] and result['data']:
             self.zone_var = str(result['data'][0]['rzone'])
             id = str(result['data'][0]['secAccountId'])
             self._account_id = id
