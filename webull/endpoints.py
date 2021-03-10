@@ -56,7 +56,7 @@ class urls :
         return f'{self.base_quote_url}/quote/tickerChartDatas/v5/{stock}'
 
     def cancel_order(self, account_id):
-        return f'{self.base_trade_url}/order/{account_id}/cancelStockOrder/'
+        return f'{self.base_ustrade_url}/trade/order/{account_id}/cancelStockOrder/'
 
     def modify_otoco_orders(self, account_id):
         return f'{self.base_trade_url}/v2/corder/stock/modify/{account_id}'
