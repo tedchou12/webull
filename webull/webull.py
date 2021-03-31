@@ -261,7 +261,7 @@ class webull:
 
         return result
 
-    def get_account_id(self):
+    def get_account_id(self, id=0):
         '''
         get account id
         call account id before trade actions
@@ -271,10 +271,9 @@ class webull:
         response = requests.get(self._urls.account_id(), headers=headers)
         result = response.json()
         if result['success'] :
-            self.zone_var = str(result['data'][0]['rzone'])
-            id = str(result['data'][0]['secAccountId'])
-            self._account_id = id
-            return id
+            self.zone_var = str(result['data'][int(id)]['rzone'])
+            self._account_id = str(result['data'][int(id)]['secAccountId'])
+            return self._account_id
         else:
             return None
 
