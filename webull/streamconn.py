@@ -2,6 +2,7 @@ import paho.mqtt.client as mqtt
 import threading
 import json
 import time
+import os
 from webull import webull
 
 class StreamConn:
