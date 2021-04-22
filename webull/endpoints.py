@@ -55,6 +55,9 @@ class urls :
     def bars(self, stock):
         return f'{self.base_quote_url}/quote/tickerChartDatas/v5/{stock}'
 
+    def get_trades(self, stock) :
+        return f'{self.base_fintech_gw_url}/bgw/quote/realtime?id={stock}'
+
     def cancel_order(self, account_id):
         return f'{self.base_ustrade_url}/trade/order/{account_id}/cancelStockOrder/'
 

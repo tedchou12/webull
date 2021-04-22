@@ -920,6 +920,14 @@ class webull:
         result = response.json()
         return result
 
+    def get_trades(self, stock=None) :
+        '''
+        get a list of trades
+        '''
+        headers = self.build_req_headers()
+        return requests.get(self._urls.get_trades(self.get_ticker(stock)), headers=headers).json()
+
+
     def get_analysis(self, stock=None):
         '''
         get analysis info and returns a dict of analysis ratings
