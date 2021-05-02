@@ -14,7 +14,7 @@ class urls :
         self.base_fintech_gw_url = 'https://quotes-gw.webullfintech.com/api'
         self.base_userfintech_url = 'https://userapi.webullfintech.com/api'
         self.base_new_trade_url = 'https://trade.webullfintech.com/api'
-
+        self.base_ustradebroker_url = 'https://ustrade.webullbroker.com/api'
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v3/home/{account_id}'
@@ -126,7 +126,7 @@ class urls :
         return f'{self.base_options_gw_url}/quote/option/chart/query?derivativeId={derivativeId}'
 
     def orders(self, account_id, page_size):
-        return f'{self.base_trade_url}/v2/option/list?secAccountId={account_id}&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
+        return f'{self.base_ustradebroker_url}/v2/option/list?secAccountId={account_id}&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
 
     def paper_orders(self, paper_account_id, page_size):
         return f'{self.base_paper_url}/paper/1/acc/{paper_account_id}/order?&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
