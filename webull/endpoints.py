@@ -14,7 +14,7 @@ class urls :
         self.base_fintech_gw_url = 'https://quotes-gw.webullfintech.com/api'
         self.base_userfintech_url = 'https://userapi.webullfintech.com/api'
         self.base_new_trade_url = 'https://trade.webullfintech.com/api'
-        self.base_ustradebroker_url = 'https://ustrade.webullbroker.com/api'
+
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v3/home/{account_id}'
@@ -59,13 +59,16 @@ class urls :
         return f'{self.base_ustrade_url}/trade/order/{account_id}/cancelStockOrder/'
 
     def modify_otoco_orders(self, account_id):
-        return f'{self.base_trade_url}/v2/corder/stock/modify/{account_id}'
+        return f'{self.base_ustrade_url}/trade/v2/corder/stock/modify/{account_id}'
 
     def cancel_otoco_orders(self, account_id, combo_id):
-        return f'{self.base_trade_url}/v2/corder/stock/cancel/{account_id}/{combo_id}'
+        return f'{self.base_ustrade_url}/trade/v2/corder/stock/cancel/{account_id}/{combo_id}'
 
     def check_otoco_orders(self, account_id):
-        return f'{self.base_trade_url}/v2/corder/stock/check/{account_id}'
+        return f'{self.base_ustrade_url}/trade/v2/corder/stock/check/{account_id}'
+
+    def place_otoco_orders(self, account_id):
+        return f'{self.base_ustrade_url}/trade/v2/corder/stock/place/{account_id}'
 
     def dividends(self, account_id):
         return f'{self.base_trade_url}/v2/account/{account_id}/dividends?direct=in'
@@ -126,7 +129,7 @@ class urls :
         return f'{self.base_options_gw_url}/quote/option/chart/query?derivativeId={derivativeId}'
 
     def orders(self, account_id, page_size):
-        return f'{self.base_ustradebroker_url}/v2/option/list?secAccountId={account_id}&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
+        return f'{self.base_trade_url}/v2/option/list?secAccountId={account_id}&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
 
     def paper_orders(self, paper_account_id, page_size):
         return f'{self.base_paper_url}/paper/1/acc/{paper_account_id}/order?&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
@@ -154,9 +157,6 @@ class urls :
 
     def modify_order(self, account_id, order_id):
         return f'{self.base_trade_url}/trade/order/{account_id}/modifyStockOrder/{order_id}'
-
-    def place_otoco_orders(self, account_id):
-        return f'{self.base_trade_url}/v2/corder/stock/place/{account_id}'
 
     def quotes(self, stock):
         return f'{self.base_options_gw_url}/quotes/ticker/getTickerRealTime?tickerId={stock}&includeSecu=1&includeQuote=1'
