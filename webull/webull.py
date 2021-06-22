@@ -141,7 +141,7 @@ class webull:
         return result
 
     def get_mfa(self, username='') :
-        account_type = self.get_account_type()
+        account_type = self.get_account_type(username)
 
         data = {'account': str(username),
                 'accountType': str(account_type),
@@ -270,7 +270,7 @@ class webull:
 
         response = requests.get(self._urls.account_id(), headers=headers)
         result = response.json()
-        if result['success'] and len(result['data']) > 0:
+        if result['success'] and len(result['data']) > 0 :
             self.zone_var = str(result['data'][int(id)]['rzone'])
             self._account_id = str(result['data'][int(id)]['secAccountId'])
             return self._account_id
@@ -760,15 +760,16 @@ class webull:
         for order in open_orders:
             self.cancel_order(order['orderId'])
 
-    def get_tradable(self, stock=''):
+    def get_tradable(self, stock='') :
         '''
         get if stock is tradable
         '''
         headers = self.build_req_headers()
         response = requests.get(self._urls.is_tradable(self.get_ticker(stock)), headers=headers)
+
         return response.json()
 
-    def alerts_list(self):
+    def alerts_list(self) :
         '''
         Get alerts
         '''
@@ -1137,7 +1138,7 @@ class webull:
         return None
 
     def get_dividends(self):
-        ''' Return account's dividend info '''
+        ''' Return account's incoming dividend info '''
         headers = self.build_req_headers()
         data = {}
         response = requests.post(self._urls.dividends(self._account_id), json=data, headers=headers)
@@ -1162,15 +1163,19 @@ class webull:
                     rank = data['data']
         return rank
 
-    def get_watchlists(self) :
+    def get_watchlists(self, as_list_symbols=False) :
         """
         get user watchlists
-        :return:
         """
         headers = self.build_req_headers()
         params = {'version': 0}
         response = requests.get(self._urls.portfolio_lists(), params=params, headers=headers)
-        return response.json()['portfolioList']
+
+        if not as_list_symbols :
+            return response.json()['portfolioList']
+        else:
+            list_ticker = response.json()['portfolioList'][0].get('tickerList')
+            return list(map(lambda x: x.get('symbol'), list_ticker))
 
     def get_account_type(self, username='') :
         try:
@@ -1180,6 +1185,17 @@ class webull:
             account_type = 1 # phone
 
         return account_type
+
+    def is_logged_in(self):
+        '''
+        Check if login session is active
+        '''
+        try:
+            self.get_account_id()
+        except KeyError:
+            return False
+        else:
+            return True
 
 ''' Paper support '''
 class paper_webull(webull):
