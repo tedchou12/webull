@@ -237,7 +237,7 @@ class webull:
         self._uuid = uuid
         self._account_id = self.get_account_id()
 
-    def refresh_login(self, save_token=False):
+    def refresh_login(self, save_token=False, token_path=None):
         '''
         Refresh login token
         '''
