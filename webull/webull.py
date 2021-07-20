@@ -87,7 +87,7 @@ class webull:
         return headers
 
 
-    def login(self, username='', password='', device_name='', mfa='', question_id='', question_answer=''):
+    def login(self, username='', password='', device_name='', mfa='', question_id='', question_answer='', save_token=False, token_path=None):
         '''
         Login with email or phone number
 
@@ -138,6 +138,8 @@ class webull:
             self._token_expire = result['tokenExpireTime']
             self._uuid = result['uuid']
             self._account_id = self.get_account_id()
+            if save_token:
+                self._save_token(result, token_path)
         return result
 
     def get_mfa(self, username='') :
@@ -235,7 +237,7 @@ class webull:
         self._uuid = uuid
         self._account_id = self.get_account_id()
 
-    def refresh_login(self):
+    def refresh_login(self, save_token=False, token_path=None):
         '''
         Refresh login token
         '''
@@ -248,7 +250,21 @@ class webull:
             self._access_token = result['accessToken']
             self._refresh_token = result['refreshToken']
             self._token_expire = result['tokenExpireTime']
+            if save_token:
+                self._save_token(result, token_path)
         return result
+
+    def _save_token(self, token=None, path=None):
+        '''
+        save login token to webull_credentials.json
+        '''
+        filename = 'webull_credentials.json'
+        if path:
+            filename = os.path.join(path, filename)
+        with open(filename, 'wb') as f:
+            pickle.dump(token, f)
+            return True
+        return Flase
 
     def get_detail(self):
         '''
