@@ -87,7 +87,7 @@ class webull:
         return headers
 
 
-    def login(self, username='', password='', device_name='', mfa='', question_id='', question_answer='', save_token=False):
+    def login(self, username='', password='', device_name='', mfa='', question_id='', question_answer='', save_token=False, token_path=None):
         '''
         Login with email or phone number
 
@@ -139,7 +139,7 @@ class webull:
             self._uuid = result['uuid']
             self._account_id = self.get_account_id()
             if save_token:
-                self._save_token(result)
+                self._save_token(result, token_path)
         return result
 
     def get_mfa(self, username='') :
