@@ -251,7 +251,7 @@ class webull:
             self._refresh_token = result['refreshToken']
             self._token_expire = result['tokenExpireTime']
             if save_token:
-                self._save_token(result)
+                self._save_token(result, token_path)
         return result
 
     def _save_token(self, token=None, path=None):
