@@ -129,7 +129,7 @@ class urls :
         return f'{self.base_options_gw_url}/quote/option/chart/query?derivativeId={derivativeId}'
 
     def orders(self, account_id, page_size):
-        return f'{self.base_ustradebroker_url}/v2/option/list?secAccountId={account_id}&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
+        return f'{self.base_ustradebroker_url}/trade/v2/option/list?secAccountId={account_id}&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
 
     def paper_orders(self, paper_account_id, page_size):
         return f'{self.base_paper_url}/paper/1/acc/{paper_account_id}/order?&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
