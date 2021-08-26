@@ -2,6 +2,10 @@
 APIs for webull, you are free to use, but code not extensively checked and Webull may update the APIs or the endpoints at any time.
 https://www.webull.com/
 
+Feel free to sign-up for a webull account through here, you will be able to help me to get referral stocks. You can also get 2 stocks for free:
+
+https://www.webull.com/activity?inviteCode=oqJvTY3rJNyR&source=invite_gw&inviteSource=wb_oversea
+
 Sorry for procrastinating in answering the questions and updating the packages. But if you really like the package or really like to motivate me. Materialist appreciations would really motivate me to responding you faster 😂:
 
 [<img src="https://miro.medium.com/max/1476/1*KGh1GBqI9R0TfSsSPHGpNg.png" width="200px">](https://www.buymeacoffee.com/tedchou12)
