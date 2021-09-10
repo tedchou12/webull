@@ -251,6 +251,7 @@ class webull:
             self._refresh_token = result['refreshToken']
             self._token_expire = result['tokenExpireTime']
             if save_token:
+                result['uuid'] = self._uuid
                 self._save_token(result, token_path)
         return result
 
