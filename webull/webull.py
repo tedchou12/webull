@@ -265,7 +265,7 @@ class webull:
         with open(filename, 'wb') as f:
             pickle.dump(token, f)
             return True
-        return Flase
+        return False
 
     def get_detail(self):
         '''
