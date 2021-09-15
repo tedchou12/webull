@@ -113,8 +113,8 @@ class urls :
     def logout(self):
         return f'{self.base_userbroker_url}/passport/login/logout'
 
-    def news(self, stock):
-        return f'{self.base_securities_url}/information/news/v5/tickerNews/{stock}'
+    def news(self, stock, Id, items):
+        return f'{self.base_fintech_gw_url}/information/news/tickerNews?tickerId={stock}&currentNewsId={Id}&pageSize={items}'
 
     def option_quotes(self):
         return f'{self.base_options_gw_url}/quote/option/query/list'
