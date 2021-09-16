@@ -27,7 +27,8 @@ class webull:
             'Accept-Encoding': 'gzip, deflate',
             'Content-Type': 'application/json',
             'platform': 'web',
-            'ver': '3.22.20',
+            'app': 'global',
+            'ver': '3.36.12',
             'User-Agent': '*',
             'lzone': 'dc_core_r001',
             'did': self._get_did(),
@@ -1019,7 +1020,7 @@ class webull:
         headers = self.build_req_headers()
         return requests.get(self._urls.fundamentals(self.get_ticker(stock)), headers=headers).json()
 
-    def get_news(self, stock=None, Id=0, items=20):
+    def get_news(self, stock=None, tId=None, Id=0, items=20):
         '''
         get news and returns a list of articles
         params:
@@ -1027,8 +1028,13 @@ class webull:
             items: number of articles to return
         '''
         headers = self.build_req_headers()
-        params = {'currentNewsId': Id, 'pageSize': items}
-        return requests.get(self._urls.news(self.get_ticker(stock)), params=params, headers=headers).json()
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+        return requests.get(self._urls.news(tId, Id, items), headers=headers).json()
 
     def get_bars(self, stock=None, tId=None, interval='m1', count=1, extendTrading=0, timeStamp=None):
         '''

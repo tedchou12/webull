@@ -124,9 +124,48 @@ def test_get_financials():
 def test_get_history_orders():
 	pass
 
-@pytest.mark.skip(reason="TODO")
-def test_get_news():
-	pass
+def test_get_news(wb: webull, reqmock):
+    stock = 'AAPL'
+    Id = 0
+    items = 20
+    ticker = 913256135
+    wb.get_ticker = MagicMock(return_value=ticker)
+    reqmock.get(urls.stock_id(stock, wb._region_code), text='''
+        {
+            "categoryId":0,
+            "categoryName":"综合",
+            "hasMore":true,
+            "list":[{
+                "tickerId":913256135,
+                "exchangeId":96,
+                "type":2,
+                "name":"Apple",
+                "symbol":"AAPL",
+                "disSymbol":"AAPL",
+                "disExchangeCode":"NASDAQ",
+                "exchangeCode":"NSQ",
+            }]
+        }
+    ''')
+
+    reqmock.get(urls.news(stock, Id, items), text='''
+        [
+          {
+            "id": 45810067,
+            "title": "US STOCKS-S&P 500, Dow gain on factory data, strong oil prices ",
+            "sourceName": "reuters.com",
+            "newsTime": "2021-09-15T16:35:33.000+0000",
+            "summary": "US STOCKS-S&P 500, Dow gain on factory data, strong oil prices ",
+            "newsUrl": "https://pub.webullfintech.com/us/news-html/83c0d98e2cca4165b94addfc3bfdac47.html",
+            "siteType": 0,
+            "collectSource": "reuters"
+          }
+        ]
+    ''')
+
+    result = wb.get_news(tId=stock, Id=Id, items=items)
+    assert result is not None
+    assert result[0]['id'] is not None
 
 @pytest.mark.skip(reason="TODO")
 def test_get_option_quote():
