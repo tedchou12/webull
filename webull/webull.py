@@ -554,7 +554,7 @@ class webull:
             response2 = requests.post(self._urls.place_otoco_orders(self._account_id), json=data2, headers=headers)
 
             # print('Resp 2: {}'.format(response2))
-            return response2.text
+            return response2.json()
         else:
             print(result1['checkResultList'][0]['code'])
             print(result1['checkResultList'][0]['msg'])
@@ -584,7 +584,7 @@ class webull:
         response = requests.post(self._urls.modify_otoco_orders(self._account_id), json=data, headers=headers)
 
         # print('Resp: {}'.format(response))
-        return response.text
+        return response.json()
 
     def cancel_order_otoco(self, combo_id=''):
         '''
@@ -734,7 +734,7 @@ class webull:
         response = requests.post(self._urls.place_option_orders(self._account_id), json=data, headers=headers)
         if response.status_code != 200:
             raise Exception('place_option_order failed', response.status_code, response.reason)
-        return response.text
+        return response.json()
 
     def modify_order_option(self, order=None, lmtPrice=None, stpPrice=None, enforce=None, quant=0):
         '''
@@ -1257,7 +1257,7 @@ class paper_webull(webull):
         ''' Current positions in paper trading account. '''
         return self.get_account()['positions']
 
-    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
+    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True):
         ''' Place a paper account order. '''
         if not tId is None:
             pass
@@ -1272,7 +1272,7 @@ class paper_webull(webull):
             'action': action, #  BUY or SELL
             'lmtPrice': float(price),
             'orderType': orderType, # 'LMT','MKT'
-            'outsideRegularTradingHour': True,
+            'outsideRegularTradingHour': outsideRegularTradingHour,
             'quantity': int(quant),
             'serialId': str(uuid.uuid4()),
             'tickerId': tId,
@@ -1286,7 +1286,7 @@ class paper_webull(webull):
         response = requests.post(self._urls.paper_place_order(self._account_id, tId), json=data, headers=headers)
         return response.json()
 
-    def modify_order(self, order, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0):
+    def modify_order(self, order, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True):
         ''' Modify a paper account order. '''
         headers = self.build_req_headers()
 
@@ -1295,7 +1295,7 @@ class paper_webull(webull):
             'lmtPrice': float(price),
             'orderType':orderType,
             'comboType': 'NORMAL', # 'LMT','MKT'
-            'outsideRegularTradingHour': True,
+            'outsideRegularTradingHour': outsideRegularTradingHour,
             'serialId': str(uuid.uuid4()),
             'tickerId': order['ticker']['tickerId'],
             'timeInForce': enforce # GTC or DAY
