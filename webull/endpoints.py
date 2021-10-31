@@ -156,7 +156,7 @@ class urls :
         return f'{self.base_ustrade_url}/trade/order/{account_id}/placeStockOrder'
 
     def modify_order(self, account_id, order_id):
-        return f'{self.base_trade_url}/trade/order/{account_id}/modifyStockOrder/{order_id}'
+        return f'{self.base_ustrade_url}/trading/v1/webull/order/stockOrderModify?secAccountId={account_id}'
 
     def quotes(self, stock):
         return f'{self.base_options_gw_url}/quotes/ticker/getTickerRealTime?tickerId={stock}&includeSecu=1&includeQuote=1'

@@ -463,7 +463,7 @@ class webull:
         response = requests.post(self._urls.place_orders(self._account_id), json=data, headers=headers)
         return response.json()
 
-    def modify_order(self, order=None, price=0, action=None, orderType=None, enforce=None, quant=0, outsideRegularTradingHour=None):
+    def modify_order(self, order=None, order_id=0, stock=None, tId=None, price=0, action=None, orderType=None, enforce=None, quant=0, outsideRegularTradingHour=None):
         '''
         Modify an order
 
@@ -472,8 +472,8 @@ class webull:
         timeinforce:  GTC / DAY / IOC
         outsideRegularTradingHour: True / False
         '''
-        if not order:
-            raise ValueError('Must provide an order')
+        if not order and not order_id:
+            raise ValueError('Must provide an order or order_id')
 
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
@@ -483,6 +483,13 @@ class webull:
         modifiedOutsideRegularTradingHour = outsideRegularTradingHour if type(outsideRegularTradingHour) == bool else order['outsideRegularTradingHour']
         modifiedEnforce = enforce or order['timeInForce']
         modifiedQuant = int(quant or order['quantity'])
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else :
+            tId = order['ticker']['tickerId']
+        order_id = order_id or order['orderId']
 
         data = {
             'action': modifiedAction,
@@ -492,14 +499,15 @@ class webull:
             'comboType': 'NORMAL',
             'outsideRegularTradingHour': modifiedOutsideRegularTradingHour,
             'serialId': str(uuid.uuid4()),
-            'tickerId': order['ticker']['tickerId'],
+            'orderId': order_id,
+            'tickerId': tId,
             'timeInForce': modifiedEnforce
         }
         #Market orders do not support extended hours trading.
         if data['orderType'] == 'MKT':
             data['outsideRegularTradingHour'] = False
 
-        response = requests.put(self._urls.modify_order(self._account_id, order['orderId']), json=data, headers=headers)
+        response = requests.post(self._urls.modify_order(self._account_id, order_id), json=data, headers=headers)
 
         return response.json()
 
