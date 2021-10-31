@@ -466,7 +466,7 @@ class webull:
     def modify_order(self, order=None, order_id=0, stock=None, tId=None, price=0, action=None, orderType=None, enforce=None, quant=0, outsideRegularTradingHour=None):
         '''
         Modify an order
-
+        order_id: order_id
         action: BUY / SELL
         ordertype : LMT / MKT / STP / STP LMT / STP TRAIL
         timeinforce:  GTC / DAY / IOC
