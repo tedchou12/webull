@@ -5,7 +5,7 @@ import time
 import os
 from webull import webull
 
-class StreamConn:
+class StreamConn :
     def __init__(self, debug_flg=False):
         self.onsub_lock = threading.RLock()
         self.oncon_lock = threading.RLock()
@@ -114,7 +114,7 @@ class StreamConn:
         return on_connect, on_subscribe, on_price_message, on_order_message, on_unsubscribe
 
 
-    def connect(self, did, access_token=None):
+    def connect(self, did, access_token=None) :
             if access_token is None:
                 say_hello = {"header":
                                  {"did": did,
@@ -150,7 +150,7 @@ class StreamConn:
                 self.client_order_upd.tls_set_context()
                 # this is a default password that they use in the app
                 self.client_order_upd.username_pw_set('test', password='test')
-                self.client_order_upd.connect('platpush.webullbroker.com', 443, 30)
+                self.client_order_upd.connect('wspush.webullbroker.com', 443, 30)
                 #time.sleep(5)
                 self.client_order_upd.loop_start()  # runs in a second thread
                 print('say hello')
@@ -238,8 +238,8 @@ if __name__ == '__main__':
     conn.price_func = on_price_message
     conn.order_func = on_order_message
 
-    if not webull.access_token is None and len(webull.access_token) > 1:
-        conn.connect(webull._did, access_token=webull.access_token)
+    if not webull._access_token is None and len(webull._access_token) > 1:
+        conn.connect(webull._did, access_token=webull._access_token)
     else:
         conn.connect(webull._did)
 
