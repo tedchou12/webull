@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="webull",
-    version="0.3.7",
+    version="0.3.8",
     author="ted chou",
     description="The unofficial python interface for the WeBull API",
     license='MIT',
@@ -25,7 +25,8 @@ setuptools.setup(
         "requests>=2.23.0",
         "six>=1.14.0",
         "urllib3>=1.25.9",
-        "email-validator>=1.1.0"
+        "email-validator>=1.1.0",
+        "paho>=1.6.1"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
