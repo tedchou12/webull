@@ -39,8 +39,7 @@ jobs:
         pipenv install pip==20.1.1 setuptools==47.3.1
         pipenv install -r requirements.txt
 
-    - name: Zappa deployments
+    - name: pypi deployments
       run: |
-        pipenv install
         pipenv run setup.py sdist
         twine upload --skip-existing dist/webull-*.tar.gz -u ted_chou12 -p ${{ secrets.PYPI_PASSWORD }}
