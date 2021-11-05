@@ -41,5 +41,5 @@ jobs:
     - name: pypi deployments
       run: |
         pipenv install
-        pipenv run setup.py sdist
+        python run setup.py sdist
         twine upload --skip-existing dist/webull-*.tar.gz -u ted_chou12 -p ${{ secrets.PYPI_PASSWORD }}
