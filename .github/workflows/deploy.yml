@@ -1,0 +1,44 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Github Webull Deploy
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the dev branch
+  push:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  deployment:
+    name: Github Webull Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repo
+      uses: actions/checkout@v2
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - name: Install twine, pipenv and libpq
+      run: |
+        sudo apt-get install libpq-dev -y
+        python3 -m pip install pipenv wheel twine
+    - name: Cache pipenv virtualenv
+      id: cache-pipenv
+      uses: actions/cache@v1
+      with:
+        path: ~/.local/share/virtualenvs
+        key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+
+    - name: Install dependencies
+      if: steps.cache-pipenv.outputs.cache-hit != 'true'
+      run: |
+        pipenv install pip==20.1.1 setuptools==47.3.1
+
+    - name: pypi deployments
+      run: |
+        python setup.py sdist
+        twine upload --skip-existing dist/webull-*.tar.gz -u ted_chou12 -p ${{ secrets.PYPI_PASSWORD }}
