@@ -9,4 +9,4 @@ requests==2.23.0
 six==1.14.0
 urllib3==1.26.5
 email-validator==1.1.0
-paho>=1.6.0
+paho>=1.5.0
