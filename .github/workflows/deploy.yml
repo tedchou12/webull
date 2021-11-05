@@ -43,4 +43,4 @@ jobs:
       run: |
         pipenv install
         pipenv run setup.py sdist
-        twine upload dist/webull-X.X.X.tar.gz -u ted_chou12 -p ${{ secrets.PYPI_PASSWORD }}
+        twine upload --skip-existing dist/webull-*.tar.gz -u ted_chou12 -p ${{ secrets.PYPI_PASSWORD }}
