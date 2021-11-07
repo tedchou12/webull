@@ -350,6 +350,13 @@ class webull:
             'pageSize' : int(count),
             'status' : status            
         }
+        data = {
+            "secAccountId":self._account_id,
+            "pageSize":count,
+            "startTimeStr":"2021-11-06",
+            "dateType":status.upper(),
+            "status":status
+            }        
 
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
 
