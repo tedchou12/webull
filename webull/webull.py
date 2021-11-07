@@ -345,6 +345,7 @@ class webull:
         '''
 
         data = {
+            'startTimeStr' : '2021-11-05',
             'dataType' : status.upper(),
             'pageSize' : int(count),
             'status' : status            
