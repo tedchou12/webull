@@ -133,6 +133,7 @@ class urls :
     
     #new history url
     def history(self, account_id): 
+        print(f'{self.base_ustrade_url}/trading/v1/webull/order/list?secAccountId={account_id}')
         return f'{self.base_ustrade_url}/trading/v1/webull/order/list?secAccountId={account_id}'
 
     def paper_orders(self, paper_account_id, page_size):
