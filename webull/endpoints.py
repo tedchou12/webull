@@ -57,8 +57,7 @@ class urls :
         return f'{self.base_quote_url}/quote/tickerChartDatas/v5/{stock}'
 
     def bars_crypto(self, stock):
-        return f'{self.base_fintech_gw_url}/charts/query?tickerIds={stock}'
-
+        return f'{self.base_fintech_gw_url}/crypto/charts/query?tickerIds={stock}'
  #/crypto/charts/query?tickerIds=950160804&period=d1
 
     def cancel_order(self, account_id):
