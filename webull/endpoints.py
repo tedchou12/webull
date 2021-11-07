@@ -15,6 +15,7 @@ class urls :
         self.base_userfintech_url = 'https://userapi.webullfintech.com/api'
         self.base_new_trade_url = 'https://trade.webullfintech.com/api'
         self.base_ustradebroker_url = 'https://ustrade.webullbroker.com/api'
+        
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v3/home/{account_id}'
@@ -54,6 +55,11 @@ class urls :
 
     def bars(self, stock):
         return f'{self.base_quote_url}/quote/tickerChartDatas/v5/{stock}'
+
+    def bars_crypto(self, stock):
+        return f'{self.base_fintech_gw_url}/charts/query?tickerIds={stock}'
+
+ #/crypto/charts/query?tickerIds=950160804&period=d1
 
     def cancel_order(self, account_id):
         return f'{self.base_ustrade_url}/trade/order/{account_id}/cancelStockOrder/'
