@@ -338,15 +338,16 @@ class webull:
         data = self.get_account()
         return data['openOrders']
 
-    def get_history_orders(self, status='All', count=20):
+    def get_history_orders(self, status='All', count=20, startdate=datetime.today().strftime('%Y-%m-%d')):
         '''
         Historical orders, can be cancelled or filled
         status = Cancelled / Filled / Working / Partially Filled / Pending / Failed / All
+        startdate = yyyy-mm-dd Start date to return orders
         '''
         data = {
             "secAccountId":self._account_id,
             "pageSize":count,
-            "startTimeStr":"2021-11-06",
+            "startTimeStr":startdate,
             "dateType":status.upper(),
             "status":status
             }        
