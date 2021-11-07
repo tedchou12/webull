@@ -343,13 +343,6 @@ class webull:
         Historical orders, can be cancelled or filled
         status = Cancelled / Filled / Working / Partially Filled / Pending / Failed / All
         '''
-
-        data = {
-            'startTimeStr' : '2021-11-05',
-            'dateType' : status.upper(),
-            'pageSize' : int(count),
-            'status' : status            
-        }
         data = {
             "secAccountId":self._account_id,
             "pageSize":count,
@@ -359,9 +352,7 @@ class webull:
             }        
 
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
-        print(headers)
-        print(data)
-        response = requests.get(self._urls.history(self._account_id),json=data, headers=headers, timeout=15)
+        response = requests.post(self._urls.history(self._account_id),json=data, headers=headers, timeout=15)
         # response = requests.post(self._urls.orders(self._account_id, count) + str(status), headers=headers, timeout=15)
         return response.json()
 
