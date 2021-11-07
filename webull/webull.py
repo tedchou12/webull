@@ -1113,8 +1113,7 @@ class webull:
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
         response = requests.get(self._urls.bars_crypto(tId), params=params, headers=headers, timeout=15)
-        result = response.json()
-        print(result)        
+        result = response.json()        
         time_zone = timezone(result[0]['timeZone'])
         for row in result[0]['data']:
             row = row.split(',')
