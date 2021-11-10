@@ -1082,6 +1082,44 @@ class webull:
             df.loc[to_datetime(datetime.fromtimestamp(int(row[0])).astimezone(time_zone))] = data
         return df.iloc[::-1]
 
+    def get_bars_crypto(self, stock=None, tId=None, interval='m1', count=1, extendTrading=0, timeStamp=None):
+        '''
+        get bars returns a pandas dataframe
+        params:
+            interval: m1, m5, m15, m30, h1, h2, h4, d1, w1
+            count: number of bars to return
+            extendTrading: change to 1 for pre-market and afterhours bars
+            timeStamp: If epoc timestamp is provided, return bar count up to timestamp. If not set default to current time.
+        '''
+        headers = self.build_req_headers()
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
+        params = {'type': interval, 'count': count, 'extendTrading': extendTrading, 'timestamp': timeStamp}
+        df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
+        df.index.name = 'timestamp'
+        response = requests.get(self._urls.bars_crypto(tId), params=params, headers=headers, timeout=15)
+        result = response.json()
+        time_zone = timezone(result[0]['timeZone'])
+        for row in result[0]['data']:
+            row = row.split(',')
+            row = ['0' if value == 'null' else value for value in row]
+            data = {
+                'open': float(row[1]),
+                'high': float(row[3]),
+                'low': float(row[4]),
+                'close': float(row[2]),
+                'volume': float(row[6]),
+                'vwap': float(row[7])
+            }
+            #convert to a panda datetime64 which has extra features like floor and resample
+            df.loc[to_datetime(datetime.fromtimestamp(int(row[0])).astimezone(time_zone))] = data
+        return df.iloc[::-1]
+
     def get_options_bars(self, derivativeId=None, interval='1m', count=1, direction=1, timeStamp=None):
         '''
         get bars returns a pandas dataframe

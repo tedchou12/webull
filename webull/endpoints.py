@@ -55,6 +55,9 @@ class urls :
     def bars(self, stock):
         return f'{self.base_quote_url}/quote/tickerChartDatas/v5/{stock}'
 
+    def bars_crypto(self, stock):
+        return f'{self.base_fintech_gw_url}/crypto/charts/query?tickerIds={stock}'
+
     def cancel_order(self, account_id):
         return f'{self.base_ustrade_url}/trade/order/{account_id}/cancelStockOrder/'
 
@@ -130,6 +133,9 @@ class urls :
 
     def orders(self, account_id, page_size):
         return f'{self.base_ustradebroker_url}/trade/v2/option/list?secAccountId={account_id}&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
+
+    def history(self, account_id):
+        return f'{self.base_ustrade_url}/trading/v1/webull/order/list?secAccountId={account_id}'
 
     def paper_orders(self, paper_account_id, page_size):
         return f'{self.base_paper_url}/paper/1/acc/{paper_account_id}/order?&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
