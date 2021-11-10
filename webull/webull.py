@@ -338,23 +338,21 @@ class webull:
         data = self.get_account()
         return data['openOrders']
 
-    def get_history_orders(self, status='All', count=20, startdate=datetime.today().strftime('%Y-%m-%d')):
+    def get_history_orders(self, status='All', count=20):
         '''
         Historical orders, can be cancelled or filled
         status = Cancelled / Filled / Working / Partially Filled / Pending / Failed / All
-        startdate = yyyy-mm-dd Start date to return orders
         '''
+
         data = {
             "secAccountId":self._account_id,
             "pageSize":count,
-            "startTimeStr":startdate,
             "dateType":status.upper(),
             "status":status
-            }        
+            }
 
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
-        response = requests.post(self._urls.history(self._account_id),json=data, headers=headers, timeout=15)
-        # response = requests.post(self._urls.orders(self._account_id, count) + str(status), headers=headers, timeout=15)
+        response = requests.post(self._urls.orders(self._account_id, count) + str(status), headers=headers, timeout=15)
         return response.json()
 
     def get_trade_token(self, password=''):
@@ -1113,7 +1111,7 @@ class webull:
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
         response = requests.get(self._urls.bars_crypto(tId), params=params, headers=headers, timeout=15)
-        result = response.json()        
+        result = response.json()
         time_zone = timezone(result[0]['timeZone'])
         for row in result[0]['data']:
             row = row.split(',')

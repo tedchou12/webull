@@ -15,7 +15,6 @@ class urls :
         self.base_userfintech_url = 'https://userapi.webullfintech.com/api'
         self.base_new_trade_url = 'https://trade.webullfintech.com/api'
         self.base_ustradebroker_url = 'https://ustrade.webullbroker.com/api'
-        
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v3/home/{account_id}'
@@ -57,7 +56,7 @@ class urls :
         return f'{self.base_quote_url}/quote/tickerChartDatas/v5/{stock}'
 
     def bars_crypto(self, stock):
-        return f'{self.base_fintech_gw_url}/crypto/charts/query?tickerIds={stock}' 
+        return f'{self.base_fintech_gw_url}/crypto/charts/query?tickerIds={stock}'
 
     def cancel_order(self, account_id):
         return f'{self.base_ustrade_url}/trade/order/{account_id}/cancelStockOrder/'
@@ -134,10 +133,8 @@ class urls :
 
     def orders(self, account_id, page_size):
         return f'{self.base_ustradebroker_url}/trade/v2/option/list?secAccountId={account_id}&startTime=1970-0-1&dateType=ORDER&pageSize={page_size}&status='
-    
-    #new history url
-    def history(self, account_id): 
-        print(f'{self.base_ustrade_url}/trading/v1/webull/order/list?secAccountId={account_id}')
+
+    def history(self, account_id):
         return f'{self.base_ustrade_url}/trading/v1/webull/order/list?secAccountId={account_id}'
 
     def paper_orders(self, paper_account_id, page_size):
