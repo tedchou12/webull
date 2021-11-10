@@ -352,7 +352,7 @@ class webull:
             }
 
         headers = self.build_req_headers(include_trade_token=True, include_time=True)
-        response = requests.post(self._urls.orders(self._account_id, count) + str(status), headers=headers, timeout=15)
+        response = requests.get(self._urls.orders(self._account_id, count) + str(status), headers=headers, timeout=15)
         return response.json()
 
     def get_trade_token(self, password=''):
