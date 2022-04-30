@@ -1,7 +1,0 @@
-/usr/local/lib/python3.9/site-packages/webull-0.4.3-py3.9.egg
-/usr/local/bin/email_validator
-/usr/local/bin/f2py
-/usr/local/bin/f2py3
-/usr/local/bin/f2py3.9
-/usr/local/bin/chardetect
-/usr/local/bin/normalizer
