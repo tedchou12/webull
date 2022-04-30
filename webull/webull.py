@@ -20,18 +20,27 @@ from . import endpoints
 
 class webull:
 
-    def __init__(self):
+    def __init__(self) :
         self._session = requests.session()
         self._headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:99.0) Gecko/20100101 Firefox/99.0',
             'Accept': '*/*',
             'Accept-Encoding': 'gzip, deflate',
+            'Accept-Language': 'en-US,en;q=0.5',
             'Content-Type': 'application/json',
             'platform': 'web',
+            'hl': 'en',
+            'os': 'web',
+            'osv': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:99.0) Gecko/20100101 Firefox/99.0',
             'app': 'global',
-            'ver': '3.36.12',
-            'User-Agent': '*',
+            'appid': 'webull-webapp',
+            'ver': '3.39.18',
             'lzone': 'dc_core_r001',
-            'did': self._get_did(),
+            'ph': 'MacOS Firefox',
+            'locale': 'eng',
+            # 'reqid': req_id,
+            'device-type': 'Web',
+            'did': self._get_did()
         }
 
         #endpoints
@@ -78,6 +87,8 @@ class webull:
         Build default set of header params
         '''
         headers = self._headers
+        req_id = str(uuid.uuid4().hex)
+        headers['reqid'] = req_id
         headers['did'] = self._did
         headers['access_token'] = self._access_token
         if include_trade_token :
