@@ -2,7 +2,6 @@ class urls :
     def __init__(self) :
         self.base_info_url = 'https://infoapi.webull.com/api'
         self.base_options_url = 'https://quoteapi.webullbroker.com/api'
-        self.base_options_url_new = 'https://quotes-gw.webullfintech.com/api'
         self.base_options_gw_url = 'https://quotes-gw.webullbroker.com/api'
         self.base_paper_url = 'https://act.webullbroker.com/webull-paper-center/api'
         self.base_quote_url = 'https://quoteapi.webullbroker.com/api'
@@ -131,7 +130,7 @@ class urls :
 
     #new function 22/05/01
     def options_exp_dat_new(self):
-        return f'{self.base_options_url_new}/quote/option/strategy/list'
+        return f'{self.base_fintech_gw_url}/quote/option/strategy/list'
 
     def options_bars(self, derivativeId):
         return f'{self.base_options_gw_url}/quote/option/chart/query?derivativeId={derivativeId}'

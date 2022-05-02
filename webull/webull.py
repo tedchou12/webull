@@ -697,10 +697,10 @@ class webull:
         params:
             stock: symbol
             count: -1
-            includeWeekly: 0 or 1
-            direction: all, calls, puts
+            includeWeekly: 0 or 1 (deprecated)
+            direction: all, call, put
             expireDate: contract expire date
-            queryAll: 0
+            queryAll: 0 (deprecated)
         '''
         headers = self.build_req_headers()
         # get next closet expiredate if none is provided
