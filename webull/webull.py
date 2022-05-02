@@ -679,8 +679,17 @@ class webull:
         returns a list of options expiration dates
         '''
         headers = self.build_req_headers()
-        data = {'count': count}
-        return requests.get(self._urls.options_exp_date(self.get_ticker(stock)), params=data, headers=headers, timeout=self.timeout).json()['expireDateList']
+        data = {'count': count,
+                'direction': 'all',
+                'tickerId': self.get_ticker(stock)}
+
+        res = requests.post(self._urls.options_exp_dat_new(), json=data, headers=headers, timeout=self.timeout).json()
+        r_data = []
+        for entry in res['expireDateList'] :
+            r_data.append(entry['from'])
+
+        # return requests.get(self._urls.options_exp_date(self.get_ticker(stock)), params=data, headers=headers, timeout=self.timeout).json()['expireDateList']
+        return r_data
 
     def get_options(self, stock=None, count=-1, includeWeekly=1, direction='all', expireDate=None, queryAll=0):
         '''
@@ -703,16 +712,46 @@ class webull:
                     expireDate = d['date']
                     break
 
-        params = {'count': count,
-                  'includeWeekly': includeWeekly,
-                  'direction': direction,
-                  'expireDate': expireDate,
-                  'unSymbol': stock,
-                  'queryAll': queryAll}
+        data = {'count': count,
+                'direction': direction,
+                'tickerId': self.get_ticker(stock)}
 
-        data = requests.get(self._urls.options(self.get_ticker(stock)), params=params, headers=headers, timeout=self.timeout).json()
+        res = requests.post(self._urls.options_exp_dat_new(), json=data, headers=headers, timeout=self.timeout).json()
+        t_data = []
+        for entry in res['expireDateList'] :
+            if str(entry['from']['date']) == expireDate :
+                t_data = entry['data']
 
-        return data['data']
+        r_data = {}
+        for entry in t_data :
+            if entry['strikePrice'] not in r_data :
+                r_data[entry['strikePrice']] = {}
+            r_data[entry['strikePrice']][entry['direction']] = entry
+
+        r_data = dict(sorted(r_data.items()))
+
+        rr_data = []
+        for s_price in r_data :
+            rr_entry = {'strikePrice': s_price}
+            if 'call' in r_data[s_price] :
+                rr_entry['call'] = r_data[s_price]['call']
+            if 'put' in r_data[s_price] :
+                rr_entry['put'] = r_data[s_price]['put']
+            rr_data.append(rr_entry)
+
+        return rr_data
+
+        #deprecated 22/05/01
+        # params = {'count': count,
+        #           'includeWeekly': includeWeekly,
+        #           'direction': direction,
+        #           'expireDate': expireDate,
+        #           'unSymbol': stock,
+        #           'queryAll': queryAll}
+        #
+        # data = requests.get(self._urls.options(self.get_ticker(stock)), params=params, headers=headers, timeout=self.timeout).json()
+        #
+        # return data['data']
 
     def get_options_by_strike_and_expire_date(self, stock=None, expireDate=None, strike=None, direction='all'):
         '''
