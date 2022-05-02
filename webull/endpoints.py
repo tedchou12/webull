@@ -204,7 +204,7 @@ class urls :
 
     def portfolio_lists(self):
         return f'{self.base_options_gw_url}/personal/portfolio/v2/check'
-    
+
     def press_releases(self, stock, typeIds=None, num=50):
         typeIdsString = ''
         if typeIds is not None:

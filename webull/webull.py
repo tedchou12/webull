@@ -1333,8 +1333,9 @@ class webull:
         headers = self.build_req_headers()
         response = requests.get(self._urls.press_releases(tId, typeIds, num), headers=headers, timeout=self.timeout)
         result = response.json()
+
         return result
-        
+
     def get_calendar_events(self, event, start_date=None, num=50):
         '''
         gets calendar events
@@ -1346,6 +1347,7 @@ class webull:
         headers = self.build_req_headers()
         response = requests.get(self._urls.calendar_events(event, self._region_code, start_date, num), headers=headers, timeout=self.timeout)
         result = response.json()
+        
         return result
 
 ''' Paper support '''
