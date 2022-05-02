@@ -1317,6 +1317,39 @@ class webull:
         else:
             return True
 
+    def get_press_releases(self, stock=None, tId=None, typeIds=None, num=50):
+        '''
+        gets press releases, useful for getting past earning reports
+        typeIds: None (all) or comma-separated string of the following: '101' (financials) / '104' (insiders)
+        it's possible they add more announcment types in the future, so check the 'announcementTypes'
+        field on the response to verify you have the typeId you want
+        '''
+        if not tId is None:
+            pass
+        elif not stock is None:
+            tId = self.get_ticker(stock)
+        else:
+            raise ValueError('Must provide a stock symbol or a stock id')
+        headers = self.build_req_headers()
+        response = requests.get(self._urls.press_releases(tId, typeIds, num), headers=headers, timeout=self.timeout)
+        result = response.json()
+
+        return result
+
+    def get_calendar_events(self, event, start_date=None, num=50):
+        '''
+        gets calendar events
+        event: 'earnings' / 'dividend' / 'splits'
+        start_date: in `YYYY-MM-DD` format, today if None
+        '''
+        if start_date is None:
+            start_date = datetime.today().strftime('%Y-%m-%d')
+        headers = self.build_req_headers()
+        response = requests.get(self._urls.calendar_events(event, self._region_code, start_date, num), headers=headers, timeout=self.timeout)
+        result = response.json()
+        
+        return result
+
 ''' Paper support '''
 class paper_webull(webull):
 

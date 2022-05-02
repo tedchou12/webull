@@ -15,6 +15,7 @@ class urls :
         self.base_userfintech_url = 'https://userapi.webullfintech.com/api'
         self.base_new_trade_url = 'https://trade.webullfintech.com/api'
         self.base_ustradebroker_url = 'https://ustrade.webullbroker.com/api'
+        self.base_securitiesfintech_url = 'https://securitiesapi.webullfintech.com/api'
 
     def account(self, account_id):
         return f'{self.base_trade_url}/v3/home/{account_id}'
@@ -203,3 +204,12 @@ class urls :
 
     def portfolio_lists(self):
         return f'{self.base_options_gw_url}/personal/portfolio/v2/check'
+
+    def press_releases(self, stock, typeIds=None, num=50):
+        typeIdsString = ''
+        if typeIds is not None:
+            typeIdsString = '&typeIds=' + typeIds
+        return f'{self.base_securitiesfintech_url}/securities/announcement/{stock}/list?lastAnnouncementId=0&limit={num}{typeIdsString}&options=2'
+
+    def calendar_events(self, event, region_code, start_date, num=50):
+        return f'{self.base_fintech_gw_url}/bgw/explore/calendar/{event}?regionId={region_code}&pageIndex=1&pageSize={num}&startDate={start_date}'
