@@ -211,5 +211,5 @@ class urls :
             typeIdsString = '&typeIds=' + typeIds
         return f'{self.base_securitiesfintech_url}/securities/announcement/{stock}/list?lastAnnouncementId=0&limit={num}{typeIdsString}&options=2'
 
-    def calendar_events(self, event, region_code, start_date, num=50):
-        return f'{self.base_fintech_gw_url}/bgw/explore/calendar/{event}?regionId={region_code}&pageIndex=1&pageSize={num}&startDate={start_date}'
+    def calendar_events(self, event, region_code, start_date, page=1, num=50):
+        return f'{self.base_fintech_gw_url}/bgw/explore/calendar/{event}?regionId={region_code}&pageIndex={page}&pageSize={num}&startDate={start_date}'
