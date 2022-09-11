@@ -1336,7 +1336,7 @@ class webull:
 
         return result
 
-    def get_calendar_events(self, event, start_date=None, num=50):
+    def get_calendar_events(self, event, start_date=None, page=1, num=50):
         '''
         gets calendar events
         event: 'earnings' / 'dividend' / 'splits'
@@ -1345,7 +1345,7 @@ class webull:
         if start_date is None:
             start_date = datetime.today().strftime('%Y-%m-%d')
         headers = self.build_req_headers()
-        response = requests.get(self._urls.calendar_events(event, self._region_code, start_date, num), headers=headers, timeout=self.timeout)
+        response = requests.get(self._urls.calendar_events(event, self._region_code, start_date, page, num), headers=headers, timeout=self.timeout)
         result = response.json()
 
         return result
