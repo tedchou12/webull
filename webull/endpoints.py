@@ -184,6 +184,9 @@ class urls :
     def replace_option_orders(self, account_id):
         return f'{self.base_trade_url}/v2/option/replaceOrder/{account_id}'
 
+    def stock_detail(self, stock) :
+        return f'{self.base_fintech_gw_url}/stock/tickerRealTime/getQuote?tickerId={stock}&includeSecu=1&includeQuote=1&more=1'
+
     def stock_id(self, stock, region_code):
         return f'{self.base_options_gw_url}/search/pc/tickers?keyword={stock}&pageIndex=1&pageSize=20&regionId={region_code}'
 
