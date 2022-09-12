@@ -406,6 +406,27 @@ class webull:
         return ticker_id
 
     '''
+    Get stock public info
+    '''
+    def get_ticker_info(self, stock=None, tId=None):
+        '''
+        get price quote
+        tId: ticker ID str
+        '''
+        headers = self.build_req_headers()
+        if not stock and not tId:
+            raise ValueError('Must provide a stock symbol or a stock id')
+
+        if stock:
+            try:
+                tId = str(self.get_ticker(stock))
+            except ValueError as _e:
+                raise ValueError("Could not find ticker for stock {}".format(stock))
+        response = requests.get(self._urls.stock_detail(tId), headers=headers, timeout=self.timeout)
+        result = response.json()
+        return result
+
+    '''
     Actions related to stock
     '''
     def get_quote(self, stock=None, tId=None):
