@@ -452,7 +452,7 @@ class webull:
             'comboType': 'NORMAL',
             'orderType': orderType,
             'outsideRegularTradingHour': outsideRegularTradingHour,
-            'quantity': int(quant),
+            'quantity': float(quant) if orderType == 'MKT' else int(quant),
             'serialId': str(uuid.uuid4()),
             'tickerId': tId,
             'timeInForce': enforce
