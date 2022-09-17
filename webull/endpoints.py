@@ -175,8 +175,8 @@ class urls :
     def rankings(self):
         return f'{self.base_securities_url}/securities/market/v5/6/portal'
 
-    def refresh_login(self):
-        return f'{self.base_user_url}/passport/refreshToken?refreshToken='
+    def refresh_login(self, refresh_token):
+        return f'{self.base_user_url}/passport/refreshToken?refreshToken={refresh_token}'
 
     def remove_alert(self):
         return f'{self.base_userbroker_url}/user/warning/v2/manage/overlap'
@@ -216,3 +216,6 @@ class urls :
 
     def calendar_events(self, event, region_code, start_date, page=1, num=50):
         return f'{self.base_fintech_gw_url}/bgw/explore/calendar/{event}?regionId={region_code}&pageIndex={page}&pageSize={num}&startDate={start_date}'
+
+    def get_all_tickers(self, region_code, user_region_code) :
+        return f'{self.base_securitiesfintech_url}/securities/market/v5/card/stockActivityPc.advanced/list?regionId={region_code}&userRegionId={user_region_code}&hasNum=0&pageSize=9999'

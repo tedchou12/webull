@@ -18,7 +18,7 @@ from pytz import timezone
 from . import endpoints
 
 
-class webull:
+class webull :
 
     def __init__(self) :
         self._session = requests.session()
@@ -257,7 +257,7 @@ class webull:
         headers = self.build_req_headers()
         data = {'refreshToken': self._refresh_token}
 
-        response = requests.post(self._urls.refresh_login() + self._refresh_token, json=data, headers=headers, timeout=self.timeout)
+        response = requests.post(self._urls.refresh_login(self._refresh_token), json=data, headers=headers, timeout=self.timeout)
         result = response.json()
         if 'accessToken' in result and result['accessToken'] != '' and result['refreshToken'] != '' and result['tokenExpireTime'] != '':
             self._access_token = result['accessToken']
@@ -379,11 +379,11 @@ class webull:
         else:
             return False
 
+    '''
+    Lookup ticker_id
+    Ticker issue, will attempt to find an exact match, if none is found, match the first one
+    '''
     def get_ticker(self, stock=''):
-        '''
-        Lookup ticker_id
-        Ticker issue, will attempt to find an exact match, if none is found, match the first one
-        '''
         headers = self.build_req_headers()
         ticker_id = 0
         if stock and isinstance(stock, str):
@@ -407,22 +407,34 @@ class webull:
 
     '''
     Get stock public info
+    get price quote
+    tId: ticker ID str
     '''
-    def get_ticker_info(self, stock=None, tId=None):
-        '''
-        get price quote
-        tId: ticker ID str
-        '''
+    def get_ticker_info(self, stock=None, tId=None) :
         headers = self.build_req_headers()
         if not stock and not tId:
             raise ValueError('Must provide a stock symbol or a stock id')
 
-        if stock:
+        if stock :
             try:
                 tId = str(self.get_ticker(stock))
             except ValueError as _e:
                 raise ValueError("Could not find ticker for stock {}".format(stock))
         response = requests.get(self._urls.stock_detail(tId), headers=headers, timeout=self.timeout)
+        result = response.json()
+        return result
+
+    '''
+    Get all tickers from a region
+    region id: https://github.com/tedchou12/webull/wiki/What-is-the-region_id%3F
+    '''
+    def get_all_tickers(self, region_code=None) :
+        headers = self.build_req_headers()
+
+        if not region_code :
+            region_code = self._region_code
+
+        response = requests.get(self._urls.get_all_tickers(region_code, region_code), headers=headers, timeout=self.timeout)
         result = response.json()
         return result
 
