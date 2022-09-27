@@ -1244,7 +1244,7 @@ class webull :
     def get_chart_data(self, stock=None, tId=None, ma=5) :
         bars = self.get_bars(stock=stock, tId=tId, interval='d1', count=800)
         ma_data = bars['close'].rolling(ma).mean()
-        return ma_data
+        return ma_data.dropna()
 
     def get_calendar(self, stock=None, tId=None):
         '''
