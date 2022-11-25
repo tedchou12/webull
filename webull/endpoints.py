@@ -118,7 +118,7 @@ class urls :
         return f'{self.base_userfintech_url}/user/risk/checkAnswer'
 
     def logout(self):
-        return f'{self.base_userbroker_url}/passport/login/logout'
+        return 'https://u1suser.webullfintech.com/api/user/v1/login/account/v2' # f'{self.base_user_url}/passport/login/v5/account'
 
     def news(self, stock, Id, items):
         return f'{self.base_fintech_gw_url}/information/news/tickerNews?tickerId={stock}&currentNewsId={Id}&pageSize={items}'
