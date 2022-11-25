@@ -90,7 +90,7 @@ class urls :
         return f'{self.base_userbroker_url}/user/warning/v2/query/tickers'
 
     def login(self):
-        return f'{self.base_user_url}/passport/login/v5/account'
+        return 'https://u1suser.webullfintech.com/api/user/v1/login/account/v2' # f'{self.base_user_url}/passport/login/v5/account'
 
     def get_mfa(self) :
         return f'{self.base_userfintech_url}/passport/v2/verificationCode/send'
@@ -118,7 +118,7 @@ class urls :
         return f'{self.base_userfintech_url}/user/risk/checkAnswer'
 
     def logout(self):
-        return 'https://u1suser.webullfintech.com/api/user/v1/login/account/v2' # f'{self.base_user_url}/passport/login/v5/account'
+        return f'{self.base_userbroker_url}/passport/login/logout'
 
     def news(self, stock, Id, items):
         return f'{self.base_fintech_gw_url}/information/news/tickerNews?tickerId={stock}&currentNewsId={Id}&pageSize={items}'
