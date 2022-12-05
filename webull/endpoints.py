@@ -12,7 +12,7 @@ class urls :
         self.base_ustrade_url = 'https://ustrade.webullfinance.com/api'
         self.base_paperfintech_url = 'https://act.webullfintech.com/webull-paper-center/api'
         self.base_fintech_gw_url = 'https://quotes-gw.webullfintech.com/api'
-        self.base_userfintech_url = 'https://userapi.webullfintech.com/api'
+        self.base_userfintech_url = 'https://u1suser.webullfintech.com/api'
         self.base_new_trade_url = 'https://trade.webullfintech.com/api'
         self.base_ustradebroker_url = 'https://ustrade.webullbroker.com/api'
         self.base_securitiesfintech_url = 'https://securitiesapi.webullfintech.com/api'
@@ -92,11 +92,11 @@ class urls :
     def login(self):
         return f'{self.base_user_url}/passport/login/v5/account'
 
-    def get_mfa(self) :
-        return f'{self.base_userfintech_url}/passport/v2/verificationCode/send'
+    def get_mfa(self):
+        return f'{self.base_userfintech_url}/user/v1/verificationCode/send/v2'
 
-    def check_mfa(self) :
-        return f'{self.base_userfintech_url}/passport/v2/verificationCode/checkCode'
+    def check_mfa(self):
+        return f'{self.base_userfintech_url}/user/v1/verificationCode/checkCode'
 
     def get_security(self, username, account_type, region_code, event, time, url=0) :
         if url == 1 :
