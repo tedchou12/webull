@@ -93,7 +93,8 @@ class urls :
         return f'{self.base_userfintech_url}/user/v1/login/account/v2'
 
     def get_mfa(self):
-        return f'{self.base_userfintech_url}/user/v1/verificationCode/send/v2'
+        #return f'{self.base_userfintech_url}/user/v1/verificationCode/send/v2'
+        return f'{self.base_user_url}/user/v1/verificationCode/send/v2'
 
     def check_mfa(self):
         return f'{self.base_userfintech_url}/user/v1/verificationCode/checkCode'
@@ -104,7 +105,7 @@ class urls :
         else :
             url = 'getSecurityQuestion'
 
-        return f'{self.base_userfintech_url}/user/risk/{url}?account={username}&accountType={account_type}&regionId={region_code}&event={event}&v={time}'
+        return f'{self.base_user_url}/user/risk/{url}?account={username}&accountType={account_type}&regionId={region_code}&event={event}&v={time}'
 
     def next_security(self, username, account_type, region_code, event, time, url=0) :
         if url == 1 :
@@ -112,13 +113,13 @@ class urls :
         else :
             url = 'nextSecurityQuestion'
 
-        return f'{self.base_userfintech_url}/user/risk/{url}?account={username}&accountType={account_type}&regionId={region_code}&event={event}&v={time}'
+        return f'{self.base_user_url}/user/risk/{url}?account={username}&accountType={account_type}&regionId={region_code}&event={event}&v={time}'
 
     def check_security(self) :
-        return f'{self.base_userfintech_url}/user/risk/checkAnswer'
+        return f'{self.base_user_url}/user/risk/checkAnswer'
 
     def logout(self):
-        return f'{self.base_userbroker_url}/passport/login/logout'
+        return f'{self.base_userfintech_url}/user/v1/logout'
 
     def news(self, stock, Id, items):
         return f'{self.base_fintech_gw_url}/information/news/tickerNews?tickerId={stock}&currentNewsId={Id}&pageSize={items}'
