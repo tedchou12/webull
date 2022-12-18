@@ -17,7 +17,6 @@ class StreamConn :
         self.client_order_upd = None
         self.client_streaming_quotes = None
 
-
     """
     ====Order status from platpush====
     topic _______: messageId, action, type, title, messageHeaders{popstatus, popvalidtime},
