@@ -3,7 +3,7 @@ import threading
 import json
 import time
 import os
-from webull import webull
+from . import webull
 
 class StreamConn :
     def __init__(self, debug_flg=False):
@@ -16,7 +16,6 @@ class StreamConn :
         self.total_volume={}
         self.client_order_upd = None
         self.client_streaming_quotes = None
-
 
     """
     ====Order status from platpush====

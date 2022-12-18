@@ -17,7 +17,6 @@ from pytz import timezone
 
 from . import endpoints
 
-
 class webull :
 
     def __init__(self) :
@@ -207,7 +206,6 @@ class webull :
         data = response.json()
         if len(data) == 0 :
             response = requests.get(self._urls.next_security(username, account_type, self._region_code, 'PRODUCT_LOGIN', time, 1), headers=self._headers, timeout=self.timeout)
-            print(response)
             data = response.json()
 
         return data
