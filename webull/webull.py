@@ -18,6 +18,8 @@ from pytz import timezone
 from . import endpoints
 
 
+bbb ()ewfwaef'wefawef
+
 class webull :
 
     def __init__(self) :
@@ -164,6 +166,7 @@ class webull :
 
         response = requests.post(self._urls.get_mfa(), json=data, headers=self._headers, timeout=self.timeout)
         # data = response.json()
+        print(response.text)
 
         if response.status_code == 200 :
             return True
@@ -1398,6 +1401,7 @@ class paper_webull(webull):
     def get_account(self):
         ''' Get important details of paper account '''
         headers = self.build_req_headers()
+        print(self._account_id)
         response = requests.get(self._urls.paper_account(self._account_id), headers=headers, timeout=self.timeout)
         return response.json()
 
