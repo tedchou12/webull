@@ -53,9 +53,9 @@ class urls :
     def analysis_capital_flow(self, stock, show_hist):
         return f'{self.base_securities_url}/wlas/capitalflow/ticker?tickerId={stock}&showHis={show_hist}'
 
-    def bars(self, stock, interval='d1', count=800):
+    def bars(self, stock, interval="d1", count=800, timestamp=None):
         #new
-        return f'{self.base_fintech_gw_url}/quote/charts/query?tickerIds={stock}&type={interval}&count={count}'
+        return f"{self.base_fintech_gw_url}/quote/charts/query?tickerIds={stock}&type={interval}&count={count}&timestamp={timestamp}"
         #old
         return f'{self.base_quote_url}/quote/tickerChartDatas/v5/{stock}'
 

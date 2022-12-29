@@ -1144,10 +1144,18 @@ class webull :
         else:
             raise ValueError('Must provide a stock symbol or a stock id')
 
-        # params = {'type': interval, 'count': count, 'extendTrading': extendTrading, 'timestamp': timeStamp}
+        if timeStamp is None:
+            timeStamp = int(time.time())
+
+        params = {'extendTrading': extendTrading}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
-        response = requests.get(self._urls.bars(tId, interval, count), headers=headers, timeout=self.timeout)
+        response = requests.get(
+            self._urls.bars(tId, interval, count, timeStamp),
+            params=params,
+            headers=headers,
+            timeout=self.timeout,
+        )
         result = response.json()
         time_zone = timezone(result[0]['timeZone'])
         for row in result[0]['data']:
