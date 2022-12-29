@@ -1144,10 +1144,19 @@ class webull :
         else:
             raise ValueError('Must provide a stock symbol or a stock id')
 
-        # params = {'type': interval, 'count': count, 'extendTrading': extendTrading, 'timestamp': timeStamp}
+        if timeStamp is None:
+            # if not set, default to current time
+            timeStamp = int(time.time())
+
+        params = {'extendTrading': extendTrading}
         df = DataFrame(columns=['open', 'high', 'low', 'close', 'volume', 'vwap'])
         df.index.name = 'timestamp'
-        response = requests.get(self._urls.bars(tId, interval, count), headers=headers, timeout=self.timeout)
+        response = requests.get(
+            self._urls.bars(tId, interval, count, timeStamp),
+            params=params,
+            headers=headers,
+            timeout=self.timeout,
+        )
         result = response.json()
         time_zone = timezone(result[0]['timeZone'])
         for row in result[0]['data']:
@@ -1239,8 +1248,8 @@ class webull :
             df.loc[to_datetime(datetime.fromtimestamp(int(row[0])).astimezone(time_zone))] = data
         return df.iloc[::-1]
 
-    def get_chart_data(self, stock=None, tId=None, ma=5) :
-        bars = self.get_bars(stock=stock, tId=tId, interval='d1', count=800)
+    def get_chart_data(self, stock=None, tId=None, ma=5, timestamp=None):
+        bars = self.get_bars(stock=stock, tId=tId, interval='d1', count=1200, timestamp=timestamp)
         ma_data = bars['close'].rolling(ma).mean()
         return ma_data.dropna()
 
