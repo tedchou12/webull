@@ -1145,6 +1145,7 @@ class webull :
             raise ValueError('Must provide a stock symbol or a stock id')
 
         if timeStamp is None:
+            # if not set, default to current time
             timeStamp = int(time.time())
 
         params = {'extendTrading': extendTrading}
@@ -1248,7 +1249,7 @@ class webull :
         return df.iloc[::-1]
 
     def get_chart_data(self, stock=None, tId=None, ma=5, timestamp=None):
-        bars = self.get_bars(stock=stock, tId=tId, interval="d1", count=800, timestamp=timestamp)
+        bars = self.get_bars(stock=stock, tId=tId, interval='d1', count=800, timestamp=timestamp)
         ma_data = bars['close'].rolling(ma).mean()
         return ma_data.dropna()
 
