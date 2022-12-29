@@ -1247,8 +1247,8 @@ class webull :
             df.loc[to_datetime(datetime.fromtimestamp(int(row[0])).astimezone(time_zone))] = data
         return df.iloc[::-1]
 
-    def get_chart_data(self, stock=None, tId=None, ma=5) :
-        bars = self.get_bars(stock=stock, tId=tId, interval='d1', count=800)
+    def get_chart_data(self, stock=None, tId=None, ma=5, timestamp=None):
+        bars = self.get_bars(stock=stock, tId=tId, interval="d1", count=800, timestamp=timestamp)
         ma_data = bars['close'].rolling(ma).mean()
         return ma_data.dropna()
 
