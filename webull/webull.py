@@ -81,6 +81,28 @@ class webull :
             pickle.dump(did, open(filename, 'wb'))
         return did
 
+    def _set_did(self, did, path = ''):
+        '''
+        If your starting to use this package after webull's new image verification for login, you'll 
+        need to login from a browser to get your did file in order to login through this api. You can 
+        find your did file by using this link: 
+
+        https://github.com/tedchou12/webull/wiki/Workaround-for-Login
+
+        and then headers tab instead of response head, and finally look for the did value from the 
+        request headers. 
+        
+        Then, you can run this program to save your did into did.bin so that it can be accessed in the
+        future without the did explicitly being in your code.
+
+        path: path to did.bin. For example _get_did('cache') will search for cache/did.bin instead.
+        '''
+        filename = 'did.bin'
+        if path:
+            filename = os.path.join(path, filename)
+        pickle.dump(did, open(filename, 'wb'))
+        return True
+    
     def build_req_headers(self, include_trade_token=False, include_time=False, include_zone_var=True):
         '''
         Build default set of header params
