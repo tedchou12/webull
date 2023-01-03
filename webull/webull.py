@@ -1270,55 +1270,6 @@ class webull :
             df.loc[to_datetime(datetime.fromtimestamp(int(row[0])).astimezone(time_zone))] = data
         return df.iloc[::-1]
 
-    def convert_bars(self, quotes): # not working, needs stock-indicators pip package to work :(
-        '''
-        Converts webull quote to quotes that work with the stock indicators for Python package:
-
-        https://python.stockindicators.dev/
-
-        REQUIREMENTS: YOU MUST INSTALL stock_indicators and pandas before using this function.
-
-        quotes: just the output of wb.get_bars()
-
-        example of how to use this:
-
-            wb = webull()
-
-            # gets the data
-            data = wb.get_bars("SPY", count = 100, interval = 'm1')
-
-            # converts it into the format for stock_indicators package
-            data2 = wb.convert_bars(data)
-
-            # gets the sma and prints out the latest 50 SMA using the close of each candle
-            sma = indicators.get_sma(data2, 50, candle_part = CandlePart.CLOSE)
-            print(sma[-1].sma)
-        '''
-        import pandas as pd
-        from stock_indicators import Quote
-
-        default = quotes.copy()
-        new_dict = {
-            'date'   : [],
-            'open'   : [],
-            'high'   : [],
-            'low'    : [],
-            'close'  : [],
-            'volume' : []
-        }
-        dict_default = default.to_dict()
-        times = dict_default['open'].keys()
-        for i in times:
-            new_dict["date"].append(i.to_pydatetime())
-            new_dict["open"].append(dict_default['open'][i])
-            new_dict["high"].append(dict_default['high'][i])
-            new_dict["low"].append(dict_default['low'][i])
-            new_dict["close"].append(dict_default['close'][i])
-            new_dict["volume"].append(dict_default['volume'][i])
-        new_df = pd.DataFrame.from_dict(new_dict)
-        quotes_list = [Quote(d,o,h,l,c,v) for d,o,h,l,c,v in zip(new_df['date'], new_df['open'], new_df['high'], new_df['low'], new_df['close'], new_df['volume'])]
-        return quotes_list
-
     def get_chart_data(self, stock=None, tId=None, ma=5, timestamp=None):
         bars = self.get_bars(stock=stock, tId=tId, interval='d1', count=1200, timestamp=timestamp)
         ma_data = bars['close'].rolling(ma).mean()
