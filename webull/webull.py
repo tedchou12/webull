@@ -81,17 +81,17 @@ class webull :
             pickle.dump(did, open(filename, 'wb'))
         return did
 
-    def _set_did(self, did, path = ''):
+    def _set_did(self, did, path=''):
         '''
-        If your starting to use this package after webull's new image verification for login, you'll 
-        need to login from a browser to get your did file in order to login through this api. You can 
-        find your did file by using this link: 
+        If your starting to use this package after webull's new image verification for login, you'll
+        need to login from a browser to get your did file in order to login through this api. You can
+        find your did file by using this link:
 
         https://github.com/tedchou12/webull/wiki/Workaround-for-Login
 
-        and then headers tab instead of response head, and finally look for the did value from the 
-        request headers. 
-        
+        and then headers tab instead of response head, and finally look for the did value from the
+        request headers.
+
         Then, you can run this program to save your did into did.bin so that it can be accessed in the
         future without the did explicitly being in your code.
 
@@ -102,7 +102,7 @@ class webull :
             filename = os.path.join(path, filename)
         pickle.dump(did, open(filename, 'wb'))
         return True
-    
+
     def build_req_headers(self, include_trade_token=False, include_time=False, include_zone_var=True):
         '''
         Build default set of header params
@@ -1273,7 +1273,7 @@ class webull :
     def convert_bars(self, quotes): # not working, needs stock-indicators pip package to work :(
         '''
         Converts webull quote to quotes that work with the stock indicators for Python package:
-        
+
         https://python.stockindicators.dev/
 
         REQUIREMENTS: YOU MUST INSTALL stock_indicators and pandas before using this function.
@@ -1286,15 +1286,15 @@ class webull :
 
             # gets the data
             data = wb.get_bars("SPY", count = 100, interval = 'm1')
-            
+
             # converts it into the format for stock_indicators package
             data2 = wb.convert_bars(data)
-            
+
             # gets the sma and prints out the latest 50 SMA using the close of each candle
             sma = indicators.get_sma(data2, 50, candle_part = CandlePart.CLOSE)
             print(sma[-1].sma)
         '''
-        import pandas as pd        
+        import pandas as pd
         from stock_indicators import Quote
 
         default = quotes.copy()
@@ -1318,7 +1318,7 @@ class webull :
         new_df = pd.DataFrame.from_dict(new_dict)
         quotes_list = [Quote(d,o,h,l,c,v) for d,o,h,l,c,v in zip(new_df['date'], new_df['open'], new_df['high'], new_df['low'], new_df['close'], new_df['volume'])]
         return quotes_list
-    
+
     def get_chart_data(self, stock=None, tId=None, ma=5, timestamp=None):
         bars = self.get_bars(stock=stock, tId=tId, interval='d1', count=1200, timestamp=timestamp)
         ma_data = bars['close'].rolling(ma).mean()
