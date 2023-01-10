@@ -19,7 +19,7 @@ from . import endpoints
 
 class webull :
 
-    def __init__(self) :
+    def __init__(self, region_code=None) :
         self._session = requests.session()
         self._headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:99.0) Gecko/20100101 Firefox/99.0',
@@ -55,7 +55,7 @@ class webull :
 
         #miscellaenous
         self._did = self._get_did()
-        self._region_code = 6
+        self._region_code = region_code or 6
         self.zone_var = 'dc_core_r001'
         self.timeout = 15
 
@@ -613,17 +613,17 @@ class webull :
 
         if result1['forward'] :
             data2 = {'newOrders': [
-                            {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant),
-                             'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
-                             'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(uuid.uuid4())},
-                            {'orderType': 'STP', 'timeInForce': time_in_force, 'quantity': int(quant),
-                             'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
-                             'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(uuid.uuid4())},
-                            {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant),
-                             'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
-                             'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(uuid.uuid4())}],
-                            'serialId': str(uuid.uuid4())
-                    }
+                {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant),
+                 'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
+                 'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(uuid.uuid4())},
+                {'orderType': 'STP', 'timeInForce': time_in_force, 'quantity': int(quant),
+                 'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
+                 'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(uuid.uuid4())},
+                {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant),
+                 'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
+                 'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(uuid.uuid4())}],
+                'serialId': str(uuid.uuid4())
+            }
 
             response2 = requests.post(self._urls.place_otoco_orders(self._account_id), json=data2, headers=headers, timeout=self.timeout)
 
@@ -643,17 +643,17 @@ class webull :
         headers = self.build_req_headers(include_trade_token=False, include_time=True)
 
         data = {'modifyOrders': [
-                        {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id1),
-                         'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
-                         'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(uuid.uuid4())},
-                        {'orderType': 'STP', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id2),
-                         'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
-                         'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(uuid.uuid4())},
-                        {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id3),
-                         'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
-                         'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(uuid.uuid4())}],
-                        'serialId': str(uuid.uuid4())
-                }
+            {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id1),
+             'outsideRegularTradingHour': False, 'action': 'BUY', 'tickerId': self.get_ticker(stock),
+             'lmtPrice': float(price), 'comboType': 'MASTER', 'serialId': str(uuid.uuid4())},
+            {'orderType': 'STP', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id2),
+             'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
+             'auxPrice': float(stop_loss_price), 'comboType': 'STOP_LOSS', 'serialId': str(uuid.uuid4())},
+            {'orderType': 'LMT', 'timeInForce': time_in_force, 'quantity': int(quant), 'orderId': str(order_id3),
+             'outsideRegularTradingHour': False, 'action': 'SELL', 'tickerId': self.get_ticker(stock),
+             'lmtPrice': float(limit_profit_price), 'comboType': 'STOP_PROFIT', 'serialId': str(uuid.uuid4())}],
+            'serialId': str(uuid.uuid4())
+        }
 
         response = requests.post(self._urls.modify_otoco_orders(self._account_id), json=data, headers=headers, timeout=self.timeout)
 
@@ -1001,18 +1001,18 @@ class webull :
         return True
 
     def active_gainer_loser(self, direction='gainer', rank_type='afterMarket', count=50) :
-          '''
-          gets gainer / loser / active stocks sorted by change
-          direction: gainer / loser / active
-          rank_type: preMarket / afterMarket / 5min / 1d / 5d / 1m / 3m / 52w (gainer/loser)
-                     volume / turnoverRatio / range (active)
-          '''
-          headers = self.build_req_headers()
+        '''
+        gets gainer / loser / active stocks sorted by change
+        direction: gainer / loser / active
+        rank_type: preMarket / afterMarket / 5min / 1d / 5d / 1m / 3m / 52w (gainer/loser)
+                   volume / turnoverRatio / range (active)
+        '''
+        headers = self.build_req_headers()
 
-          response = requests.get(self._urls.active_gainers_losers(direction, self._region_code, rank_type, count), headers=headers, timeout=self.timeout)
-          result = response.json()
+        response = requests.get(self._urls.active_gainers_losers(direction, self._region_code, rank_type, count), headers=headers, timeout=self.timeout)
+        result = response.json()
 
-          return result
+        return result
 
     def run_screener(self, region=None, price_lte=None, price_gte=None, pct_chg_gte=None, pct_chg_lte=None, sort=None,
                      sort_dir=None, vol_lte=None, vol_gte=None):
