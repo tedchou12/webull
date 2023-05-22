@@ -5,7 +5,7 @@ numpy==1.22.0
 pandas==0.25.3
 python-dateutil==2.8.1
 pytz==2020.1
-requests==2.23.0
+requests==2.31.0
 six==1.14.0
 urllib3==1.26.5
 email-validator==1.1.0
