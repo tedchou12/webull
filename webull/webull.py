@@ -19,7 +19,7 @@ from . import endpoints
 
 class webull :
 
-    def __init__(self, region_code=None) :
+    def __init__(self, did_dir, region_code=None) :
         self._session = requests.session()
         self._headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:99.0) Gecko/20100101 Firefox/99.0',
@@ -39,7 +39,7 @@ class webull :
             'locale': 'eng',
             # 'reqid': req_id,
             'device-type': 'Web',
-            'did': self._get_did()
+            'did': self._get_did(path=did_dir)
         }
 
         #endpoints
@@ -54,7 +54,7 @@ class webull :
         self._uuid = ''
 
         #miscellaenous
-        self._did = self._get_did()
+        self._did = self._get_did(path=did_dir)
         self._region_code = region_code or 6
         self.zone_var = 'dc_core_r001'
         self.timeout = 15
@@ -81,7 +81,7 @@ class webull :
             pickle.dump(did, open(filename, 'wb'))
         return did
 
-    def _set_did(self, did, path=''):
+    def _set_did(self, did, path):
         '''
         If your starting to use this package after webull's new image verification for login, you'll
         need to login from a browser to get your did file in order to login through this api. You can
